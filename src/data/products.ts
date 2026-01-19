@@ -7,6 +7,7 @@ import pulseiraImg from "@/assets/product-pulseira-1.jpg";
 
 export type ProductCategory = "lacos-infantil" | "lacos-adulto" | "tiaras" | "pulseiras";
 export type ProductStatus = "em-estoque" | "sob-encomenda" | "esgotado";
+export type ProductCollection = "carnaval" | "sao-joao" | "natal" | "ano-novo" | "escolar" | "especiais";
 
 export interface Product {
   id: string;
@@ -17,7 +18,8 @@ export interface Product {
   category: ProductCategory;
   image: string;
   status: ProductStatus;
-  collection?: string;
+  collection?: ProductCollection;
+  stock?: number;
 }
 
 export const categoryLabels: Record<ProductCategory, string> = {
@@ -33,6 +35,15 @@ export const statusLabels: Record<ProductStatus, string> = {
   "esgotado": "Esgotado",
 };
 
+export const collectionLabels: Record<ProductCollection, string> = {
+  "carnaval": "Carnaval",
+  "sao-joao": "São João",
+  "natal": "Natal",
+  "ano-novo": "Ano Novo",
+  "escolar": "Escolar",
+  "especiais": "Especiais",
+};
+
 export const products: Product[] = [
   {
     id: "1",
@@ -43,7 +54,8 @@ export const products: Product[] = [
     category: "lacos-infantil",
     image: lacoImg,
     status: "em-estoque",
-    collection: "Primavera 2025",
+    collection: "especiais",
+    stock: 5,
   },
   {
     id: "2",
@@ -54,6 +66,8 @@ export const products: Product[] = [
     category: "lacos-infantil",
     image: lacoImg,
     status: "em-estoque",
+    collection: "escolar",
+    stock: 3,
   },
   {
     id: "3",
@@ -64,7 +78,8 @@ export const products: Product[] = [
     category: "lacos-adulto",
     image: laco2Img,
     status: "sob-encomenda",
-    collection: "Luxo",
+    collection: "especiais",
+    stock: 0,
   },
   {
     id: "4",
@@ -75,7 +90,8 @@ export const products: Product[] = [
     category: "tiaras",
     image: tiaraImg,
     status: "em-estoque",
-    collection: "Noivas 2025",
+    collection: "especiais",
+    stock: 2,
   },
   {
     id: "5",
@@ -86,6 +102,8 @@ export const products: Product[] = [
     category: "tiaras",
     image: tiara2Img,
     status: "sob-encomenda",
+    collection: "natal",
+    stock: 0,
   },
   {
     id: "6",
@@ -96,6 +114,8 @@ export const products: Product[] = [
     category: "pulseiras",
     image: pulseiraImg,
     status: "em-estoque",
+    collection: "especiais",
+    stock: 4,
   },
   {
     id: "7",
@@ -106,7 +126,8 @@ export const products: Product[] = [
     category: "pulseiras",
     image: pulseiraImg,
     status: "em-estoque",
-    collection: "Clássica",
+    collection: "especiais",
+    stock: 6,
   },
   {
     id: "8",
@@ -117,7 +138,8 @@ export const products: Product[] = [
     category: "lacos-infantil",
     image: laco3Img,
     status: "em-estoque",
-    collection: "Junina 2025",
+    collection: "sao-joao",
+    stock: 10,
   },
   {
     id: "9",
@@ -128,6 +150,8 @@ export const products: Product[] = [
     category: "lacos-adulto",
     image: laco2Img,
     status: "em-estoque",
+    collection: "natal",
+    stock: 3,
   },
   {
     id: "10",
@@ -138,6 +162,7 @@ export const products: Product[] = [
     category: "tiaras",
     image: tiara2Img,
     status: "em-estoque",
-    collection: "Festas 2025",
+    collection: "ano-novo",
+    stock: 2,
   },
 ];

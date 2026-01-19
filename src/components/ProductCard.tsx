@@ -1,19 +1,17 @@
-import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product, statusLabels } from "@/data/products";
+import { Product, statusLabels, collectionLabels } from "@/data/products";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
-  index: number;
 }
 
-const ProductCard = ({ product, index }: ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
   const whatsappNumber = "5511999999999"; // Substituir pelo número real
   const whatsappMessage = encodeURIComponent(
-    `Olá Roberta! Gostei do produto ${product.name} (Código: ${product.code}). Poderia me passar mais informações?`
+    `Olá! Tenho interesse no item ${product.name} (Código: ${product.code}).`
   );
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -23,6 +21,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       currency: "BRL",
     });
   };
+
+  const isUnavailable = product.stock === 0 || product.status === "esgotado";
 
   const getStatusColor = (status: Product["status"]) => {
     switch (status) {
@@ -36,27 +36,28 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   };
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-500"
-    >
+    <article className="relative bg-card rounded-2xl overflow-hidden border border-border">
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden">
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover"
+          loading="lazy"
         />
         
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Unavailable Overlay */}
+        {isUnavailable && (
+          <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
+            <span className="bg-card px-4 py-2 rounded-lg font-body text-sm font-medium text-foreground">
+              Indisponível
+            </span>
+          </div>
+        )}
         
         {/* Code Badge */}
         <div className="absolute top-3 left-3">
-          <span className="inline-block px-3 py-1 bg-card/90 backdrop-blur-sm rounded-lg text-xs font-body font-medium text-gold border border-gold/30">
+          <span className="inline-block px-3 py-1 bg-card/90 rounded-lg text-xs font-body font-medium text-gold border border-gold/30">
             {product.code}
           </span>
         </div>
@@ -65,7 +66,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         <div className="absolute top-3 right-3">
           <Badge 
             variant="outline" 
-            className={cn("text-xs font-body backdrop-blur-sm", getStatusColor(product.status))}
+            className={cn("text-xs font-body", getStatusColor(product.status))}
           >
             {statusLabels[product.status]}
           </Badge>
@@ -73,26 +74,26 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
         {/* Collection Badge */}
         {product.collection && (
-          <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <span className="inline-block px-3 py-1 bg-gold/90 backdrop-blur-sm rounded-lg text-xs font-body text-secondary-foreground">
-              {product.collection}
+          <div className="absolute bottom-3 left-3">
+            <span className="inline-block px-3 py-1 bg-gold/90 rounded-lg text-xs font-body text-secondary-foreground">
+              {collectionLabels[product.collection]}
             </span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <h4 className="font-display text-lg text-foreground mb-1 group-hover:text-gold transition-colors duration-300">
+      <div className="p-4">
+        <h4 className="font-display text-base text-foreground mb-1">
           {product.name}
         </h4>
         
-        <p className="font-body text-sm text-muted-foreground mb-4 line-clamp-2">
+        <p className="font-body text-xs text-muted-foreground mb-3 line-clamp-2">
           {product.description}
         </p>
 
-        <div className="flex items-center justify-between gap-4">
-          <span className="font-display text-xl text-gold">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-display text-lg text-gold">
             {formatPrice(product.price)}
           </span>
 
@@ -100,27 +101,24 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             variant="whatsapp"
             size="sm"
             asChild
-            disabled={product.status === "esgotado"}
+            disabled={isUnavailable}
             className={cn(
-              product.status === "esgotado" && "opacity-50 cursor-not-allowed"
+              isUnavailable && "opacity-50 cursor-not-allowed pointer-events-none"
             )}
           >
             <a
-              href={product.status !== "esgotado" ? whatsappLink : undefined}
+              href={!isUnavailable ? whatsappLink : undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2"
+              className="flex items-center gap-1.5"
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Consultar</span>
+              <span className="hidden sm:inline text-xs">Consultar</span>
             </a>
           </Button>
         </div>
       </div>
-
-      {/* Decorative Border */}
-      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gold/20 transition-colors duration-500 pointer-events-none" />
-    </motion.article>
+    </article>
   );
 };
 
