@@ -5,17 +5,19 @@ import CategoryFilter from "@/components/CategoryFilter";
 import ProductGrid from "@/components/ProductGrid";
 import FloatingButtons from "@/components/FloatingButtons";
 import Footer from "@/components/Footer";
-import { products, ProductCategory } from "@/data/products";
+import { products, ProductCategory, ProductCollection } from "@/data/products";
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "all">("all");
+  const [selectedCollection, setSelectedCollection] = useState<ProductCollection | "all">("all");
 
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === "all") {
-      return products;
-    }
-    return products.filter((product) => product.category === selectedCategory);
-  }, [selectedCategory]);
+    return products.filter((product) => {
+      const categoryMatch = selectedCategory === "all" || product.category === selectedCategory;
+      const collectionMatch = selectedCollection === "all" || product.collection === selectedCollection;
+      return categoryMatch && collectionMatch;
+    });
+  }, [selectedCategory, selectedCollection]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,7 +26,9 @@ const Index = () => {
         <HeroBanner />
         <CategoryFilter
           selectedCategory={selectedCategory}
+          selectedCollection={selectedCollection}
           onCategoryChange={setSelectedCategory}
+          onCollectionChange={setSelectedCollection}
         />
         <ProductGrid products={filteredProducts} />
       </main>
