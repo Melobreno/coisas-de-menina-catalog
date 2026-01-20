@@ -3,7 +3,7 @@ import { Instagram, MessageCircle } from "lucide-react";
 
 const FloatingButtons = () => {
   const instagramUrl = "https://instagram.com/coisas10menina";
-  const whatsappNumber = "5511999999999"; // Substituir pelo número real
+  const whatsappNumber = "5581988325302"; // Substituir pelo número real
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Vim pelo catálogo digital e gostaria de mais informações.")}`;
 
   return (
