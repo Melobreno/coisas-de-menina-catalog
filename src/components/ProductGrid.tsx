@@ -1,5 +1,18 @@
 import ProductCard from "./ProductCard";
-import { Product } from "@/data/products";
+import { ProductCategory, ProductCollection } from "@/hooks/useProducts";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  code: string;
+  category: ProductCategory;
+  collection: ProductCollection | null;
+  status: "em-estoque" | "sob-encomenda" | "esgotado";
+  stock: number;
+  image: string;
+}
 
 interface ProductGridProps {
   products: Product[];

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, Check } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,41 +27,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  products as initialProducts, 
-  Product, 
-  ProductCategory, 
-  ProductCollection,
-  ProductStatus,
-  categoryLabels, 
-  collectionLabels,
-  statusLabels 
-} from "@/data/products";
+import { useAuth } from "@/hooks/useAuth";
+import { useProducts, ProductCategory, ProductCollection, categoryLabels, collectionLabels } from "@/hooks/useProducts";
+import LoginForm from "@/components/LoginForm";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+
+const statusLabels = {
+  "em-estoque": "Em Estoque",
+  "sob-encomenda": "Sob Encomenda",
+  "esgotado": "Esgotado",
+};
 
 const Admin = () => {
-  const [productList, setProductList] = useState<Product[]>(initialProducts);
+  const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
+  const { 
+    products, 
+    isLoading: productsLoading, 
+    addProduct, 
+    updateProduct, 
+    deleteProduct, 
+    bulkUpdateCollection, 
+    bulkDelete,
+    uploadImage 
+  } = useProducts();
+
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [bulkCollection, setBulkCollection] = useState<ProductCollection | "">("");
+  const [isUploading, setIsUploading] = useState(false);
 
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const [formData, setFormData] = useState({
     name: "",
     code: "",
     description: "",
     price: 0,
-    category: "lacos-infantil",
-    collection: "especiais",
-    status: "em-estoque",
+    category: "lacos-infantil" as ProductCategory,
+    collection: "especiais" as ProductCollection,
     stock: 0,
-    image: "/placeholder.svg",
+    image_url: null as string | null,
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProducts(productList.map(p => p.id));
+      setSelectedProducts(products.map(p => p.id));
     } else {
       setSelectedProducts([]);
     }
@@ -75,49 +84,47 @@ const Admin = () => {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedProducts.length === 0) return;
-    setProductList(productList.filter(p => !selectedProducts.includes(p.id)));
+    await bulkDelete(selectedProducts);
     setSelectedProducts([]);
-    toast.success(`${selectedProducts.length} produto(s) excluído(s)`);
   };
 
-  const handleBulkCollectionChange = () => {
+  const handleBulkCollectionChange = async () => {
     if (selectedProducts.length === 0 || !bulkCollection) return;
-    setProductList(productList.map(p => 
-      selectedProducts.includes(p.id) 
-        ? { ...p, collection: bulkCollection as ProductCollection }
-        : p
-    ));
+    await bulkUpdateCollection(selectedProducts, bulkCollection);
     setSelectedProducts([]);
     setBulkCollection("");
-    toast.success(`Coleção atualizada para ${selectedProducts.length} produto(s)`);
   };
 
-  const handleAddProduct = () => {
-    const newProduct: Product = {
-      ...formData as Product,
-      id: Date.now().toString(),
-    };
-    setProductList([...productList, newProduct]);
+  const handleAddProduct = async () => {
+    await addProduct(formData);
     setIsAddDialogOpen(false);
     resetForm();
-    toast.success("Produto adicionado com sucesso");
   };
 
-  const handleEditProduct = () => {
-    if (!editingProduct) return;
-    setProductList(productList.map(p => 
-      p.id === editingProduct.id ? { ...editingProduct, ...formData } as Product : p
-    ));
-    setEditingProduct(null);
+  const handleEditProduct = async () => {
+    if (!editingProductId) return;
+    await updateProduct(editingProductId, formData);
+    setEditingProductId(null);
     resetForm();
-    toast.success("Produto atualizado com sucesso");
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProductList(productList.filter(p => p.id !== productId));
-    toast.success("Produto excluído");
+  const handleDeleteProduct = async (productId: string) => {
+    await deleteProduct(productId);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const url = await uploadImage(file);
+    setIsUploading(false);
+
+    if (url) {
+      setFormData({ ...formData, image_url: url });
+    }
   };
 
   const resetForm = () => {
@@ -128,15 +135,23 @@ const Admin = () => {
       price: 0,
       category: "lacos-infantil",
       collection: "especiais",
-      status: "em-estoque",
       stock: 0,
-      image: "/placeholder.svg",
+      image_url: null,
     });
   };
 
-  const startEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData(product);
+  const startEdit = (product: typeof products[0]) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name,
+      code: product.code,
+      description: product.description || "",
+      price: product.price,
+      category: product.category,
+      collection: product.collection || "especiais",
+      stock: product.stock,
+      image_url: product.image_url,
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -145,6 +160,66 @@ const Admin = () => {
       currency: "BRL",
     });
   };
+
+  const getStockStatus = (stock: number) => {
+    if (stock === 0) return "esgotado";
+    if (stock <= 3) return "sob-encomenda";
+    return "em-estoque";
+  };
+
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md">
+          <LoginForm />
+          <div className="mt-6 text-center">
+            <Link to="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar ao Catálogo
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged in but not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card border border-border rounded-xl p-6 text-center">
+          <h2 className="font-display text-xl text-foreground mb-2">Acesso Restrito</h2>
+          <p className="font-body text-sm text-muted-foreground mb-4">
+            Você não tem permissão para acessar o painel administrativo.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Link to="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={signOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const ProductForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
     <div className="space-y-4">
@@ -239,45 +314,31 @@ const Admin = () => {
       </div>
 
       <div>
-        <Label className="font-body text-sm">Status</Label>
-        <Select
-          value={formData.status}
-          onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-card z-50">
-            {Object.entries(statusLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
         <Label className="font-body text-sm">Imagem</Label>
         <div className="mt-1 flex items-center gap-2">
           <Input
             type="file"
             accept="image/*"
             className="flex-1"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  setFormData({ ...formData, image: reader.result as string });
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
+            onChange={handleImageUpload}
+            disabled={isUploading}
           />
-          <Upload className="w-5 h-5 text-muted-foreground" />
+          {isUploading ? (
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          ) : (
+            <Upload className="w-5 h-5 text-muted-foreground" />
+          )}
         </div>
+        {formData.image_url && (
+          <img 
+            src={formData.image_url} 
+            alt="Preview" 
+            className="mt-2 w-20 h-20 rounded-lg object-cover"
+          />
+        )}
       </div>
 
-      <Button onClick={onSubmit} className="w-full mt-4">
+      <Button onClick={onSubmit} className="w-full mt-4" disabled={isUploading}>
         <Save className="w-4 h-4 mr-2" />
         {submitLabel}
       </Button>
@@ -302,20 +363,26 @@ const Admin = () => {
               </h1>
             </div>
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="gold" size="sm" onClick={resetForm}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Produto
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="font-display">Adicionar Produto</DialogTitle>
-                </DialogHeader>
-                <ProductForm onSubmit={handleAddProduct} submitLabel="Adicionar Produto" />
-              </DialogContent>
-            </Dialog>
+            <div className="flex items-center gap-2">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="gold" size="sm" onClick={resetForm}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Produto
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Adicionar Produto</DialogTitle>
+                  </DialogHeader>
+                  <ProductForm onSubmit={handleAddProduct} submitLabel="Adicionar Produto" />
+                </DialogContent>
+              </Dialog>
+
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -360,105 +427,119 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Products Table */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedProducts.length === productList.length && productList.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead className="font-body text-xs">Imagem</TableHead>
-                <TableHead className="font-body text-xs">Código</TableHead>
-                <TableHead className="font-body text-xs">Nome</TableHead>
-                <TableHead className="font-body text-xs">Categoria</TableHead>
-                <TableHead className="font-body text-xs">Coleção</TableHead>
-                <TableHead className="font-body text-xs">Preço</TableHead>
-                <TableHead className="font-body text-xs">Estoque</TableHead>
-                <TableHead className="font-body text-xs">Status</TableHead>
-                <TableHead className="font-body text-xs w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {productList.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
+        {/* Loading */}
+        {productsLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gold" />
+          </div>
+        ) : products.length === 0 ? (
+          <div className="bg-card border border-border rounded-xl p-12 text-center">
+            <p className="font-body text-muted-foreground">Nenhum produto cadastrado.</p>
+            <p className="font-body text-sm text-muted-foreground mt-1">
+              Clique em "Novo Produto" para começar.
+            </p>
+          </div>
+        ) : (
+          /* Products Table */
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                      checked={selectedProducts.length === products.length && products.length > 0}
+                      onCheckedChange={handleSelectAll}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                  </TableCell>
-                  <TableCell className="font-body text-xs text-gold font-medium">
-                    {product.code}
-                  </TableCell>
-                  <TableCell className="font-body text-sm">{product.name}</TableCell>
-                  <TableCell className="font-body text-xs text-muted-foreground">
-                    {categoryLabels[product.category]}
-                  </TableCell>
-                  <TableCell className="font-body text-xs text-muted-foreground">
-                    {product.collection ? collectionLabels[product.collection] : "-"}
-                  </TableCell>
-                  <TableCell className="font-body text-sm text-gold">
-                    {formatPrice(product.price)}
-                  </TableCell>
-                  <TableCell>
-                    <span className={cn(
-                      "font-body text-xs px-2 py-1 rounded",
-                      product.stock === 0 
-                        ? "bg-rose-100 text-rose-700" 
-                        : "bg-emerald-100 text-emerald-700"
-                    )}>
-                      {product.stock ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-body text-xs">
-                    {statusLabels[product.status]}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => startEdit(product)}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle className="font-display">Editar Produto</DialogTitle>
-                          </DialogHeader>
-                          <ProductForm onSubmit={handleEditProduct} submitLabel="Salvar Alterações" />
-                        </DialogContent>
-                      </Dialog>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead className="font-body text-xs">Imagem</TableHead>
+                  <TableHead className="font-body text-xs">Código</TableHead>
+                  <TableHead className="font-body text-xs">Nome</TableHead>
+                  <TableHead className="font-body text-xs">Categoria</TableHead>
+                  <TableHead className="font-body text-xs">Coleção</TableHead>
+                  <TableHead className="font-body text-xs">Preço</TableHead>
+                  <TableHead className="font-body text-xs">Estoque</TableHead>
+                  <TableHead className="font-body text-xs">Status</TableHead>
+                  <TableHead className="font-body text-xs w-24">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedProducts.includes(product.id)}
+                        onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <img 
+                        src={product.image_url || "/placeholder.svg"} 
+                        alt={product.name}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                    </TableCell>
+                    <TableCell className="font-body text-xs text-gold font-medium">
+                      {product.code}
+                    </TableCell>
+                    <TableCell className="font-body text-sm">{product.name}</TableCell>
+                    <TableCell className="font-body text-xs text-muted-foreground">
+                      {categoryLabels[product.category]}
+                    </TableCell>
+                    <TableCell className="font-body text-xs text-muted-foreground">
+                      {product.collection ? collectionLabels[product.collection] : "-"}
+                    </TableCell>
+                    <TableCell className="font-body text-sm text-gold">
+                      {formatPrice(product.price)}
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        "font-body text-xs px-2 py-1 rounded",
+                        product.stock === 0 
+                          ? "bg-rose-100 text-rose-700" 
+                          : "bg-emerald-100 text-emerald-700"
+                      )}>
+                        {product.stock}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-body text-xs">
+                      {statusLabels[getStockStatus(product.stock)]}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              onClick={() => startEdit(product)}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="font-display">Editar Produto</DialogTitle>
+                            </DialogHeader>
+                            <ProductForm onSubmit={handleEditProduct} submitLabel="Salvar Alterações" />
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteProduct(product.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </main>
     </div>
   );

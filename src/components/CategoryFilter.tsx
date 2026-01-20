@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ProductCategory, ProductCollection, categoryLabels, collectionLabels } from "@/data/products";
+import { ProductCategory, ProductCollection, categoryLabels, collectionLabels } from "@/hooks/useProducts";
 import {
   Select,
   SelectContent,
