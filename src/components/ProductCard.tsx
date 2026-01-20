@@ -28,7 +28,7 @@ const statusLabels = {
 };
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const whatsappNumber = "5511999999999"; // Substituir pelo número real
+  const whatsappNumber = "5581988325302"; // Substituir pelo número real
   const whatsappMessage = encodeURIComponent(
     `Olá! Tenho interesse no item ${product.name} (Código: ${product.code}).`
   );
