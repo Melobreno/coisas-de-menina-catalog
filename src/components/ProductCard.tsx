@@ -1,12 +1,31 @@
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product, statusLabels, collectionLabels } from "@/data/products";
+import { collectionLabels, ProductCollection } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  code: string;
+  category: string;
+  collection: ProductCollection | null;
+  status: "em-estoque" | "sob-encomenda" | "esgotado";
+  stock: number;
+  image: string;
+}
 
 interface ProductCardProps {
   product: Product;
 }
+
+const statusLabels = {
+  "em-estoque": "Em Estoque",
+  "sob-encomenda": "Sob Encomenda",
+  "esgotado": "Esgotado",
+};
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const whatsappNumber = "5511999999999"; // Substituir pelo número real
