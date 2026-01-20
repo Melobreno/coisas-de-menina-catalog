@@ -66,15 +66,23 @@ export const useProducts = () => {
       .select()
       .single();
 
-    if (error) {
+    if (product == null) {
       console.error("Error adding product:", error);
       toast.error("Erro ao adicionar produto");
       return null;
-    }
-
-    toast.success("Produto adicionado com sucesso");
-    await fetchProducts();
-    return data as Product;
+    } else if (product.name === ""){
+      console.error("Error adding product:", error);
+      toast.error("Erro ao adicionar produto");
+      return null;
+    } else if (error) {
+      console.error("Error adding product:", error);
+      toast.error("Erro ao adicionar produto");
+      return null;
+    } 
+    
+      toast.success("Produto adicionado com sucesso");
+      await fetchProducts();
+      return data as Product;
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {

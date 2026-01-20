@@ -38,6 +38,159 @@ const statusLabels = {
   "esgotado": "Esgotado",
 };
 
+interface ProductFormData {
+  name: string;
+  code: string;
+  description: string;
+  price: number;
+  category: ProductCategory;
+  collection: ProductCollection;
+  stock: number;
+  image_url: string | null;
+}
+
+// 2. Defina as props que o formulário vai receber
+interface ProductFormProps {
+  formData: ProductFormData;
+  setFormData: (data: ProductFormData) => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  isUploading: boolean;
+  handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+// 3. O componente agora é independente e recebe tudo via props
+const ProductForm = ({ 
+  formData, 
+  setFormData, 
+  onSubmit, 
+  submitLabel, 
+  isUploading, 
+  handleImageUpload 
+}: ProductFormProps) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="name" className="font-body text-sm">Nome</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="code" className="font-body text-sm">Código Único</Label>
+        <Input
+          id="code"
+          value={formData.code}
+          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+          className="mt-1"
+        />
+      </div>
+    </div>
+
+    <div>
+      <Label htmlFor="description" className="font-body text-sm">Descrição</Label>
+      <Input
+        id="description"
+        value={formData.description}
+        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        className="mt-1"
+      />
+    </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="price" className="font-body text-sm">Preço (R$)</Label>
+        <Input
+          id="price"
+          type="number"
+          step="0.01"
+          value={formData.price}
+          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="stock" className="font-body text-sm">Estoque</Label>
+        <Input
+          id="stock"
+          type="number"
+          value={formData.stock}
+          onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+          className="mt-1"
+        />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label className="font-body text-sm">Categoria</Label>
+        <Select
+          value={formData.category}
+          onValueChange={(value) => setFormData({ ...formData, category: value as ProductCategory })}
+        >
+          <SelectTrigger className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card z-50">
+            {Object.entries(categoryLabels).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="font-body text-sm">Coleção</Label>
+        <Select
+          value={formData.collection}
+          onValueChange={(value) => setFormData({ ...formData, collection: value as ProductCollection })}
+        >
+          <SelectTrigger className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card z-50">
+            {Object.entries(collectionLabels).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+
+    <div>
+      <Label className="font-body text-sm">Imagem</Label>
+      <div className="mt-1 flex items-center gap-2">
+        <Input
+          type="file"
+          accept="image/*"
+          className="flex-1"
+          onChange={handleImageUpload}
+          disabled={isUploading}
+        />
+        {isUploading ? (
+          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+        ) : (
+          <Upload className="w-5 h-5 text-muted-foreground" />
+        )}
+      </div>
+      {formData.image_url && (
+        <img 
+          src={formData.image_url} 
+          alt="Preview" 
+          className="mt-2 w-20 h-20 rounded-lg object-cover"
+        />
+      )}
+    </div>
+
+    <Button onClick={onSubmit} className="w-full mt-4" disabled={isUploading}>
+      <Save className="w-4 h-4 mr-2" />
+      {submitLabel}
+    </Button>
+  </div>
+);
+
 const Admin = () => {
   const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
   const { 
@@ -221,130 +374,6 @@ const Admin = () => {
     );
   }
 
-  const ProductForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name" className="font-body text-sm">Nome</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label htmlFor="code" className="font-body text-sm">Código Único</Label>
-          <Input
-            id="code"
-            value={formData.code}
-            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="description" className="font-body text-sm">Descrição</Label>
-        <Input
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="mt-1"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="price" className="font-body text-sm">Preço (R$)</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label htmlFor="stock" className="font-body text-sm">Estoque</Label>
-          <Input
-            id="stock"
-            type="number"
-            value={formData.stock}
-            onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-            className="mt-1"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="font-body text-sm">Categoria</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => setFormData({ ...formData, category: value as ProductCategory })}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card z-50">
-              {Object.entries(categoryLabels).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="font-body text-sm">Coleção</Label>
-          <Select
-            value={formData.collection}
-            onValueChange={(value) => setFormData({ ...formData, collection: value as ProductCollection })}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card z-50">
-              {Object.entries(collectionLabels).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label className="font-body text-sm">Imagem</Label>
-        <div className="mt-1 flex items-center gap-2">
-          <Input
-            type="file"
-            accept="image/*"
-            className="flex-1"
-            onChange={handleImageUpload}
-            disabled={isUploading}
-          />
-          {isUploading ? (
-            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-          ) : (
-            <Upload className="w-5 h-5 text-muted-foreground" />
-          )}
-        </div>
-        {formData.image_url && (
-          <img 
-            src={formData.image_url} 
-            alt="Preview" 
-            className="mt-2 w-20 h-20 rounded-lg object-cover"
-          />
-        )}
-      </div>
-
-      <Button onClick={onSubmit} className="w-full mt-4" disabled={isUploading}>
-        <Save className="w-4 h-4 mr-2" />
-        {submitLabel}
-      </Button>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -375,7 +404,7 @@ const Admin = () => {
                   <DialogHeader>
                     <DialogTitle className="font-display">Adicionar Produto</DialogTitle>
                   </DialogHeader>
-                  <ProductForm onSubmit={handleAddProduct} submitLabel="Adicionar Produto" />
+                  <ProductForm formData={formData} setFormData={setFormData} onSubmit={handleAddProduct} submitLabel="Adicionar Produto" isUploading={isUploading} handleImageUpload={handleImageUpload}/>
                 </DialogContent>
               </Dialog>
 
@@ -521,7 +550,7 @@ const Admin = () => {
                             <DialogHeader>
                               <DialogTitle className="font-display">Editar Produto</DialogTitle>
                             </DialogHeader>
-                            <ProductForm onSubmit={handleEditProduct} submitLabel="Salvar Alterações" />
+                            <ProductForm formData={formData} setFormData={setFormData} onSubmit={handleEditProduct} submitLabel="Salvar Alterações" isUploading={isUploading} handleImageUpload={handleImageUpload}/>
                           </DialogContent>
                         </Dialog>
                         <Button 
