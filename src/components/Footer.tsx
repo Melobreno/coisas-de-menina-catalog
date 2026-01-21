@@ -48,7 +48,7 @@ const Footer = () => {
           {/* Copyright */}
           <div className="mt-10 pt-6 border-t border-border w-full">
             <p className="font-body text-xs text-muted-foreground flex items-center justify-center gap-1">
-              Feito com <Heart className="w-3 h-3 text-rose-pastel fill-current" /> em 2025
+              Feito com <Heart className="w-3 h-3 text-rose-pastel fill-current" /> em 2026
             </p>
           </div>
         </div>
