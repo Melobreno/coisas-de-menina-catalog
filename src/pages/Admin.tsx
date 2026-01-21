@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2, Search, Download, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { useProducts, ProductCategory, ProductCollection, categoryLabels, collectionLabels } from "@/hooks/useProducts";
+import { useProducts, ProductCategory, ProductCollection, ProductStatus, categoryLabels, collectionLabels, statusLabels } from "@/hooks/useProducts";
 import LoginForm from "@/components/LoginForm";
 import { cn } from "@/lib/utils";
-
-const statusLabels = {
-  "em-estoque": "Em Estoque",
-  "sob-encomenda": "Sob Encomenda",
-  "esgotado": "Esgotado",
-};
 
 interface ProductFormData {
   name: string;
@@ -45,28 +39,32 @@ interface ProductFormData {
   price: number;
   category: ProductCategory;
   collection: ProductCollection;
+  status: ProductStatus;
   stock: number;
   image_url: string | null;
+  image_url_2: string | null;
 }
 
-// 2. Defina as props que o formulário vai receber
 interface ProductFormProps {
   formData: ProductFormData;
   setFormData: (data: ProductFormData) => void;
   onSubmit: () => void;
   submitLabel: string;
   isUploading: boolean;
+  isUploading2: boolean;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleImageUpload2: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-// 3. O componente agora é independente e recebe tudo via props
 const ProductForm = ({ 
   formData, 
   setFormData, 
   onSubmit, 
   submitLabel, 
-  isUploading, 
-  handleImageUpload 
+  isUploading,
+  isUploading2,
+  handleImageUpload,
+  handleImageUpload2 
 }: ProductFormProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
@@ -142,16 +140,16 @@ const ProductForm = ({
         </Select>
       </div>
       <div>
-        <Label className="font-body text-sm">Coleção</Label>
+        <Label className="font-body text-sm">Status</Label>
         <Select
-          value={formData.collection}
-          onValueChange={(value) => setFormData({ ...formData, collection: value as ProductCollection })}
+          value={formData.status}
+          onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}
         >
           <SelectTrigger className="mt-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card z-50">
-            {Object.entries(collectionLabels).map(([key, label]) => (
+            {Object.entries(statusLabels).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
           </SelectContent>
@@ -160,31 +158,74 @@ const ProductForm = ({
     </div>
 
     <div>
-      <Label className="font-body text-sm">Imagem</Label>
-      <div className="mt-1 flex items-center gap-2">
-        <Input
-          type="file"
-          accept="image/*"
-          className="flex-1"
-          onChange={handleImageUpload}
-          disabled={isUploading}
-        />
-        {isUploading ? (
-          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-        ) : (
-          <Upload className="w-5 h-5 text-muted-foreground" />
-        )}
-      </div>
-      {formData.image_url && (
-        <img 
-          src={formData.image_url} 
-          alt="Preview" 
-          className="mt-2 w-20 h-20 rounded-lg object-cover"
-        />
-      )}
+      <Label className="font-body text-sm">Coleção</Label>
+      <Select
+        value={formData.collection}
+        onValueChange={(value) => setFormData({ ...formData, collection: value as ProductCollection })}
+      >
+        <SelectTrigger className="mt-1">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-card z-50">
+          {Object.entries(collectionLabels).map(([key, label]) => (
+            <SelectItem key={key} value={key}>{label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
 
-    <Button onClick={onSubmit} className="w-full mt-4" disabled={isUploading}>
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label className="font-body text-sm">Imagem Principal</Label>
+        <div className="mt-1 flex items-center gap-2">
+          <Input
+            type="file"
+            accept="image/*"
+            className="flex-1"
+            onChange={handleImageUpload}
+            disabled={isUploading}
+          />
+          {isUploading ? (
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          ) : (
+            <Upload className="w-5 h-5 text-muted-foreground" />
+          )}
+        </div>
+        {formData.image_url && (
+          <img 
+            src={formData.image_url} 
+            alt="Preview" 
+            className="mt-2 w-16 h-16 rounded-lg object-cover"
+          />
+        )}
+      </div>
+      <div>
+        <Label className="font-body text-sm">Imagem Secundária</Label>
+        <div className="mt-1 flex items-center gap-2">
+          <Input
+            type="file"
+            accept="image/*"
+            className="flex-1"
+            onChange={handleImageUpload2}
+            disabled={isUploading2}
+          />
+          {isUploading2 ? (
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          ) : (
+            <Upload className="w-5 h-5 text-muted-foreground" />
+          )}
+        </div>
+        {formData.image_url_2 && (
+          <img 
+            src={formData.image_url_2} 
+            alt="Preview 2" 
+            className="mt-2 w-16 h-16 rounded-lg object-cover"
+          />
+        )}
+      </div>
+    </div>
+
+    <Button onClick={onSubmit} className="w-full mt-4" disabled={isUploading || isUploading2}>
       <Save className="w-4 h-4 mr-2" />
       {submitLabel}
     </Button>
@@ -209,21 +250,39 @@ const Admin = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [bulkCollection, setBulkCollection] = useState<ProductCollection | "">("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploading2, setIsUploading2] = useState(false);
 
-  const [formData, setFormData] = useState({
+  // Search and Filter states
+  const [searchCode, setSearchCode] = useState("");
+  const [filterCategory, setFilterCategory] = useState<ProductCategory | "all">("all");
+  const [filterStatus, setFilterStatus] = useState<ProductStatus | "all">("all");
+
+  const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     code: "",
     description: "",
     price: 0,
-    category: "lacos-infantil" as ProductCategory,
-    collection: "especiais" as ProductCollection,
+    category: "lacos-infantil",
+    collection: "especiais",
+    status: "em-estoque",
     stock: 0,
-    image_url: null as string | null,
+    image_url: null,
+    image_url_2: null,
   });
+
+  // Filtered products
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const codeMatch = searchCode === "" || product.code.toLowerCase().includes(searchCode.toLowerCase());
+      const categoryMatch = filterCategory === "all" || product.category === filterCategory;
+      const statusMatch = filterStatus === "all" || product.status === filterStatus;
+      return codeMatch && categoryMatch && statusMatch;
+    });
+  }, [products, searchCode, filterCategory, filterStatus]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProducts(products.map(p => p.id));
+      setSelectedProducts(filteredProducts.map(p => p.id));
     } else {
       setSelectedProducts([]);
     }
@@ -280,6 +339,19 @@ const Admin = () => {
     }
   };
 
+  const handleImageUpload2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading2(true);
+    const url = await uploadImage(file);
+    setIsUploading2(false);
+
+    if (url) {
+      setFormData({ ...formData, image_url_2: url });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -288,8 +360,10 @@ const Admin = () => {
       price: 0,
       category: "lacos-infantil",
       collection: "especiais",
+      status: "em-estoque",
       stock: 0,
       image_url: null,
+      image_url_2: null,
     });
   };
 
@@ -302,8 +376,10 @@ const Admin = () => {
       price: product.price,
       category: product.category,
       collection: product.collection || "especiais",
+      status: product.status,
       stock: product.stock,
       image_url: product.image_url,
+      image_url_2: product.image_url_2,
     });
   };
 
@@ -314,10 +390,28 @@ const Admin = () => {
     });
   };
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return "esgotado";
-    if (stock <= 3) return "sob-encomenda";
-    return "em-estoque";
+  const exportToCSV = () => {
+    const headers = ["Nome", "Código", "Categoria", "Preço", "Imagem"];
+    const rows = filteredProducts.map(p => [
+      p.name,
+      p.code,
+      categoryLabels[p.category],
+      p.price.toFixed(2).replace(".", ","),
+      p.image_url || ""
+    ]);
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(";"))
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `produtos-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   // Loading state
@@ -353,7 +447,7 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-card border border-border rounded-xl p-6 text-center">
-          <h2 className="font-display text-xl text-foreground mb-2">Acesso Restrito</h2>
+          <h2 className="font-body font-semibold text-xl text-foreground mb-2">Acesso Restrito</h2>
           <p className="font-body text-sm text-muted-foreground mb-4">
             Você não tem permissão para acessar o painel administrativo.
           </p>
@@ -387,7 +481,7 @@ const Admin = () => {
                   Voltar
                 </Button>
               </Link>
-              <h1 className="font-display text-xl text-foreground">
+              <h1 className="font-body font-semibold text-xl text-foreground">
                 Painel Administrativo
               </h1>
             </div>
@@ -402,9 +496,18 @@ const Admin = () => {
                 </DialogTrigger>
                 <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="font-display">Adicionar Produto</DialogTitle>
+                    <DialogTitle className="font-body font-semibold">Adicionar Produto</DialogTitle>
                   </DialogHeader>
-                  <ProductForm formData={formData} setFormData={setFormData} onSubmit={handleAddProduct} submitLabel="Adicionar Produto" isUploading={isUploading} handleImageUpload={handleImageUpload}/>
+                  <ProductForm 
+                    formData={formData} 
+                    setFormData={setFormData} 
+                    onSubmit={handleAddProduct} 
+                    submitLabel="Adicionar Produto" 
+                    isUploading={isUploading} 
+                    isUploading2={isUploading2}
+                    handleImageUpload={handleImageUpload}
+                    handleImageUpload2={handleImageUpload2}
+                  />
                 </DialogContent>
               </Dialog>
 
@@ -417,6 +520,57 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6">
+        {/* Search and Filter Bar */}
+        <div className="bg-card border border-border rounded-xl p-4 mb-6">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <Label className="font-body text-xs text-muted-foreground mb-1 block">Buscar por Código</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Digite o código..."
+                  value={searchCode}
+                  onChange={(e) => setSearchCode(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="w-40">
+              <Label className="font-body text-xs text-muted-foreground mb-1 block">Categoria</Label>
+              <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v as ProductCategory | "all")}>
+                <SelectTrigger>
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent className="bg-card z-50">
+                  <SelectItem value="all">Todas</SelectItem>
+                  {Object.entries(categoryLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-40">
+              <Label className="font-body text-xs text-muted-foreground mb-1 block">Status</Label>
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as ProductStatus | "all")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="bg-card z-50">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {Object.entries(statusLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="default" onClick={exportToCSV}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
+        </div>
+
         {/* Bulk Actions */}
         {selectedProducts.length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap items-center gap-4">
@@ -461,12 +615,16 @@ const Admin = () => {
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-gold" />
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
-            <p className="font-body text-muted-foreground">Nenhum produto cadastrado.</p>
-            <p className="font-body text-sm text-muted-foreground mt-1">
-              Clique em "Novo Produto" para começar.
+            <p className="font-body text-muted-foreground">
+              {products.length === 0 ? "Nenhum produto cadastrado." : "Nenhum produto encontrado com os filtros atuais."}
             </p>
+            {products.length === 0 && (
+              <p className="font-body text-sm text-muted-foreground mt-1">
+                Clique em "Novo Produto" para começar.
+              </p>
+            )}
           </div>
         ) : (
           /* Products Table */
@@ -476,7 +634,7 @@ const Admin = () => {
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedProducts.length === products.length && products.length > 0}
+                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -492,7 +650,7 @@ const Admin = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <Checkbox
@@ -501,11 +659,20 @@ const Admin = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <img 
-                        src={product.image_url || "/placeholder.svg"} 
-                        alt={product.name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
+                      <div className="flex gap-1">
+                        <img 
+                          src={product.image_url || "/placeholder.svg"} 
+                          alt={product.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                        {product.image_url_2 && (
+                          <img 
+                            src={product.image_url_2} 
+                            alt={`${product.name} 2`}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-body text-xs text-gold font-medium">
                       {product.code}
@@ -530,8 +697,15 @@ const Admin = () => {
                         {product.stock}
                       </span>
                     </TableCell>
-                    <TableCell className="font-body text-xs">
-                      {statusLabels[getStockStatus(product.stock)]}
+                    <TableCell>
+                      <span className={cn(
+                        "font-body text-xs px-2 py-1 rounded",
+                        product.status === "em-estoque" && "bg-emerald-100 text-emerald-700",
+                        product.status === "sob-encomenda" && "bg-amber-100 text-amber-700",
+                        product.status === "esgotado" && "bg-rose-100 text-rose-700"
+                      )}>
+                        {statusLabels[product.status]}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -548,9 +722,18 @@ const Admin = () => {
                           </DialogTrigger>
                           <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle className="font-display">Editar Produto</DialogTitle>
+                              <DialogTitle className="font-body font-semibold">Editar Produto</DialogTitle>
                             </DialogHeader>
-                            <ProductForm formData={formData} setFormData={setFormData} onSubmit={handleEditProduct} submitLabel="Salvar Alterações" isUploading={isUploading} handleImageUpload={handleImageUpload}/>
+                            <ProductForm 
+                              formData={formData} 
+                              setFormData={setFormData} 
+                              onSubmit={handleEditProduct} 
+                              submitLabel="Salvar Alterações" 
+                              isUploading={isUploading} 
+                              isUploading2={isUploading2}
+                              handleImageUpload={handleImageUpload}
+                              handleImageUpload2={handleImageUpload2}
+                            />
                           </DialogContent>
                         </Dialog>
                         <Button 

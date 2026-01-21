@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export type ProductCategory = "lacos-infantil" | "lacos-adulto" | "tiaras" | "pulseiras";
 export type ProductCollection = "carnaval" | "sao-joao" | "natal" | "ano-novo" | "escolar" | "especiais";
+export type ProductStatus = "em-estoque" | "sob-encomenda" | "esgotado";
 
 export interface Product {
   id: string;
@@ -14,7 +15,9 @@ export interface Product {
   category: ProductCategory;
   collection: ProductCollection | null;
   stock: number;
+  status: ProductStatus;
   image_url: string | null;
+  image_url_2: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +36,12 @@ export const collectionLabels: Record<ProductCollection, string> = {
   "ano-novo": "Ano Novo",
   "escolar": "Escolar",
   "especiais": "Especiais",
+};
+
+export const statusLabels: Record<ProductStatus, string> = {
+  "em-estoque": "Em Estoque",
+  "sob-encomenda": "Sob Encomenda",
+  "esgotado": "Esgotado",
 };
 
 export const useProducts = () => {

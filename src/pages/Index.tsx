@@ -30,9 +30,10 @@ const Index = () => {
     code: p.code,
     category: p.category,
     collection: p.collection,
-    status: p.stock === 0 ? "esgotado" as const : p.stock <= 3 ? "sob-encomenda" as const : "em-estoque" as const,
+    status: p.status,
     stock: p.stock,
     image: p.image_url || "/placeholder.svg",
+    image2: p.image_url_2,
   }));
 
   return (
