@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +44,30 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     });
   };
 
-  const isUnavailable = product.stock === 0 || product.status === "esgotado";
+  // Determine availability based on stock AND status
+  const getAvailabilityInfo = () => {
+    if (product.status === "esgotado" || product.stock === 0) {
+      return { 
+        label: "Esgotado", 
+        className: "bg-destructive/10 text-destructive border-destructive/20",
+        isAvailable: false 
+      };
+    }
+    if (product.status === "sob-encomenda") {
+      return { 
+        label: "Sob encomenda", 
+        className: "bg-amber-50 text-amber-700 border-amber-200",
+        isAvailable: true 
+      };
+    }
+    return { 
+      label: "Em estoque", 
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      isAvailable: true 
+    };
+  };
+
+  const availability = getAvailabilityInfo();
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -56,13 +79,13 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-card max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-card max-w-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>{product.name}</DialogTitle>
         </VisuallyHidden>
         
-        {/* Image Gallery */}
-        <div className="relative aspect-square bg-muted">
+        {/* Image Gallery - Smaller on mobile */}
+        <div className="relative aspect-[4/3] sm:aspect-square bg-muted">
           <img
             src={images[currentImageIndex] || "/placeholder.svg"}
             alt={product.name}
@@ -75,29 +98,31 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-10 w-10 rounded-full"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
                 onClick={prevImage}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-10 w-10 rounded-full"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
                 onClick={nextImage}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
               
               {/* Dots Indicator */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {images.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
                     className={cn(
-                      "w-2 h-2 rounded-full transition-colors",
-                      idx === currentImageIndex ? "bg-gold" : "bg-card/60"
+                      "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200",
+                      idx === currentImageIndex 
+                        ? "bg-gold scale-110" 
+                        : "bg-card/60 hover:bg-card/80"
                     )}
                   />
                 ))}
@@ -105,46 +130,59 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
             </>
           )}
 
-          {/* Code Badge */}
-          <div className="absolute top-4 left-4">
-            <span className="inline-block px-3 py-1.5 bg-card/90 rounded-lg text-sm font-body font-medium text-gold border border-gold/30">
+          {/* Code Badge - Smaller on mobile */}
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+            <span className="inline-block px-2 py-1 sm:px-3 sm:py-1.5 bg-card/90 rounded-lg text-xs sm:text-sm font-body font-medium text-gold border border-gold/30">
               {product.code}
+            </span>
+          </div>
+
+          {/* Availability Badge - Delicate style */}
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+            <span className={cn(
+              "inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-body font-medium border transition-all",
+              availability.className
+            )}>
+              {availability.label}
             </span>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          <h2 className="font-body font-semibold text-2xl text-foreground mb-2">
+        {/* Content - Compact on mobile */}
+        <div className="p-4 sm:p-6">
+          <h2 className="font-body font-semibold text-lg sm:text-2xl text-foreground mb-1.5 sm:mb-2 leading-tight">
             {product.name}
           </h2>
           
-          <p className="font-body text-muted-foreground mb-4 leading-relaxed">
-            {product.description}
-          </p>
+          {product.description && (
+            <p className="font-body text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed line-clamp-3 sm:line-clamp-none">
+              {product.description}
+            </p>
+          )}
 
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-body font-bold text-2xl text-gold">
+          {/* Mobile: Stack layout / Desktop: Row layout */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <span className="font-body font-bold text-xl sm:text-2xl text-gold">
               {formatPrice(product.price)}
             </span>
 
             <Button
               variant="whatsapp"
-              size="lg"
+              size="default"
               asChild
-              disabled={isUnavailable}
+              disabled={!availability.isAvailable}
               className={cn(
-                "gap-2",
-                isUnavailable && "opacity-50 cursor-not-allowed pointer-events-none"
+                "gap-2 w-full sm:w-auto justify-center text-sm sm:text-base py-2.5 sm:py-3",
+                !availability.isAvailable && "opacity-50 cursor-not-allowed pointer-events-none"
               )}
             >
               <a
-                href={!isUnavailable ? whatsappLink : undefined}
+                href={availability.isAvailable ? whatsappLink : undefined}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <MessageCircle className="w-5 h-5" />
-                {isUnavailable ? "Indisponível" : "Consultar"}
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                {!availability.isAvailable ? "Indisponível" : "Consultar"}
               </a>
             </Button>
           </div>
