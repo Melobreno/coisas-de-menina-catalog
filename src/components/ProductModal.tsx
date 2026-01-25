@@ -9,6 +9,7 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { getProductAvailability } from "@/lib/productAvailability";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ interface ProductModalProps {
 
 const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const isMobile = useIsMobile();
   
   const images = [product.image, product.image2].filter(Boolean) as string[];
   const hasMultipleImages = images.length > 1;
@@ -58,102 +61,158 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  // Check if description is long enough to need truncation (mobile only)
+  const descriptionNeedsTruncation = isMobile && product.description && product.description.length > 80;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-card max-w-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "bg-card max-w-2xl p-0 overflow-hidden",
+        isMobile ? "max-h-[95vh] flex flex-col" : "max-h-[90vh] overflow-y-auto"
+      )}>
         <VisuallyHidden>
           <DialogTitle>{product.name}</DialogTitle>
         </VisuallyHidden>
         
-        {/* Image Gallery - Smaller on mobile */}
-        <div className="relative aspect-[4/3] sm:aspect-square bg-muted">
-          <img
-            src={images[currentImageIndex] || "/placeholder.svg"}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-          
-          {/* Navigation Arrows */}
-          {hasMultipleImages && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
-                onClick={prevImage}
-              >
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
-                onClick={nextImage}
-              >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-              
-              {/* Dots Indicator */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {images.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentImageIndex(idx)}
-                    className={cn(
-                      "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200",
-                      idx === currentImageIndex 
-                        ? "bg-gold scale-110" 
-                        : "bg-card/60 hover:bg-card/80"
-                    )}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+        {/* Scrollable content area on mobile */}
+        <div className={cn(isMobile && "flex-1 overflow-y-auto pb-20")}>
+          {/* Image Gallery - Smaller on mobile */}
+          <div className="relative aspect-[4/3] sm:aspect-square bg-muted">
+            <img
+              src={images[currentImageIndex] || "/placeholder.svg"}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Navigation Arrows */}
+            {hasMultipleImages && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+                  onClick={prevImage}
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+                  onClick={nextImage}
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+                
+                {/* Dots Indicator */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={cn(
+                        "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200",
+                        idx === currentImageIndex 
+                          ? "bg-gold scale-110" 
+                          : "bg-card/60 hover:bg-card/80"
+                      )}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
-          {/* Code Badge - Smaller on mobile */}
-          <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
-            <span className="inline-block px-2 py-1 sm:px-3 sm:py-1.5 bg-card/90 rounded-lg text-xs sm:text-sm font-body font-medium text-gold border border-gold/30">
-              {product.code}
-            </span>
+            {/* Code Badge - Smaller on mobile */}
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+              <span className="inline-block px-2 py-1 sm:px-3 sm:py-1.5 bg-card/90 rounded-lg text-xs sm:text-sm font-body font-medium text-gold border border-gold/30">
+                {product.code}
+              </span>
+            </div>
+
+            {/* Availability Badge - Delicate style */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+              <span className={cn(
+                "inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-body font-medium border transition-all",
+                 availability.badgeClassName
+              )}>
+                {availability.label}
+              </span>
+            </div>
           </div>
 
-          {/* Availability Badge - Delicate style */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
-            <span className={cn(
-              "inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-body font-medium border transition-all",
-               availability.badgeClassName
-            )}>
-              {availability.label}
-            </span>
+          {/* Content - Compact on mobile */}
+          <div className="p-4 sm:p-6">
+            <h2 className="font-body font-semibold text-lg sm:text-2xl text-foreground mb-1.5 sm:mb-2 leading-tight">
+              {product.name}
+            </h2>
+            
+            {product.description && (
+              <div className="mb-3 sm:mb-4">
+                <p className={cn(
+                  "font-body text-sm sm:text-base text-muted-foreground leading-relaxed",
+                  isMobile && !isDescriptionExpanded && "line-clamp-2"
+                )}>
+                  {product.description}
+                </p>
+                {descriptionNeedsTruncation && (
+                  <button
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="text-xs text-gold hover:text-gold/80 font-medium mt-1 transition-colors"
+                  >
+                    {isDescriptionExpanded ? "ver menos" : "ver mais"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Desktop: Row layout with CTA */}
+            {!isMobile && (
+              <div className="flex items-center justify-between gap-4">
+                <span className="font-body font-bold text-2xl text-gold">
+                  {formatPrice(product.price)}
+                </span>
+
+                <Button
+                  variant="whatsapp"
+                  size="default"
+                  asChild
+                  disabled={!availability.isAvailable}
+                  className={cn(
+                    "gap-2",
+                    !availability.isAvailable && "opacity-50 cursor-not-allowed pointer-events-none"
+                  )}
+                >
+                  <a
+                    href={availability.isAvailable ? whatsappLink : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    {!availability.isAvailable ? "Indisponível" : "Consultar"}
+                  </a>
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile: Only price in content area */}
+            {isMobile && (
+              <span className="font-body font-bold text-xl text-gold">
+                {formatPrice(product.price)}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Content - Compact on mobile */}
-        <div className="p-4 sm:p-6">
-          <h2 className="font-body font-semibold text-lg sm:text-2xl text-foreground mb-1.5 sm:mb-2 leading-tight">
-            {product.name}
-          </h2>
-          
-          {product.description && (
-            <p className="font-body text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed line-clamp-3 sm:line-clamp-none">
-              {product.description}
-            </p>
-          )}
-
-          {/* Mobile: Stack layout / Desktop: Row layout */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <span className="font-body font-bold text-xl sm:text-2xl text-gold">
-              {formatPrice(product.price)}
-            </span>
-
+        {/* Mobile: Fixed CTA at bottom */}
+        {isMobile && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-card border-t border-border/50 shadow-lg">
             <Button
               variant="whatsapp"
               size="default"
               asChild
               disabled={!availability.isAvailable}
               className={cn(
-                "gap-2 w-full sm:w-auto justify-center text-sm sm:text-base py-2.5 sm:py-3",
+                "gap-2 w-full justify-center",
                 !availability.isAvailable && "opacity-50 cursor-not-allowed pointer-events-none"
               )}
             >
@@ -162,12 +221,12 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                {!availability.isAvailable ? "Indisponível" : "Consultar"}
+                <MessageCircle className="w-4 h-4" />
+                {!availability.isAvailable ? "Indisponível" : "Consultar via WhatsApp"}
               </a>
             </Button>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
