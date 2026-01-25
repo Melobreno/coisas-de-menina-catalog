@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
+import { getProductAvailability } from "@/lib/productAvailability";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -44,30 +45,10 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     });
   };
 
-  // Determine availability based on stock AND status
-  const getAvailabilityInfo = () => {
-    if (product.status === "esgotado" || product.stock === 0) {
-      return { 
-        label: "Esgotado", 
-        className: "bg-destructive/10 text-destructive border-destructive/20",
-        isAvailable: false 
-      };
-    }
-    if (product.status === "sob-encomenda") {
-      return { 
-        label: "Sob encomenda", 
-        className: "bg-amber-50 text-amber-700 border-amber-200",
-        isAvailable: true 
-      };
-    }
-    return { 
-      label: "Em estoque", 
-      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      isAvailable: true 
-    };
-  };
-
-  const availability = getAvailabilityInfo();
+  const availability = getProductAvailability({
+    status: product.status,
+    stock: product.stock,
+  });
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -141,7 +122,7 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
             <span className={cn(
               "inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-body font-medium border transition-all",
-              availability.className
+               availability.badgeClassName
             )}>
               {availability.label}
             </span>

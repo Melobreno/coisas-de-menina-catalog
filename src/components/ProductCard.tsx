@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { collectionLabels, ProductCollection } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
+import { getProductAvailability } from "@/lib/productAvailability";
 import ProductModal from "./ProductModal";
 
 interface Product {
@@ -24,12 +25,6 @@ interface ProductCardProps {
   product: Product;
 }
 
-const statusLabels = {
-  "em-estoque": "Em Estoque",
-  "sob-encomenda": "Sob Encomenda",
-  "esgotado": "Esgotado",
-};
-
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -46,18 +41,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
     });
   };
 
-  const isUnavailable = product.stock === 0 || product.status === "esgotado";
-
-  const getStatusColor = (status: Product["status"]) => {
-    switch (status) {
-      case "em-estoque":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "sob-encomenda":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      case "esgotado":
-        return "bg-rose-100 text-rose-700 border-rose-200";
-    }
-  };
+  const availability = getProductAvailability({
+    status: product.status,
+    stock: product.stock,
+  });
+  const isUnavailable = !availability.isAvailable;
 
   return (
     <>
@@ -70,18 +58,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className={cn(
+              "w-full h-full object-cover transition-transform duration-300 hover:scale-105",
+              isUnavailable && "opacity-70"
+            )}
             loading="lazy"
           />
-          
-          {/* Unavailable Overlay */}
-          {isUnavailable && (
-            <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
-              <span className="bg-card px-4 py-2 rounded-lg font-body text-sm font-medium text-foreground">
-                Indisponível
-              </span>
-            </div>
-          )}
           
           {/* Code Badge */}
           <div className="absolute top-3 left-3">
@@ -94,9 +76,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <div className="absolute top-3 right-3">
             <Badge 
               variant="outline" 
-              className={cn("text-xs font-body", getStatusColor(product.status))}
+              className={cn(
+                "text-[10px] sm:text-xs font-body font-medium px-2 py-0.5",
+                availability.badgeClassName
+              )}
             >
-              {statusLabels[product.status]}
+              {availability.label}
             </Badge>
           </div>
 
