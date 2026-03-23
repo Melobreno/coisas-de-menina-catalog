@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { LogIn, UserPlus, Loader2, ShieldAlert } from "lucide-react";
+import { LogIn, UserPlus, Loader2, ShieldAlert, MailCheck } from "lucide-react";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
 const MAX_ATTEMPTS = 5;
@@ -20,6 +20,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const { signIn, signUp } = useAuth();
