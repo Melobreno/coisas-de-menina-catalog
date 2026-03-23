@@ -35,8 +35,13 @@ const ResetPassword = () => {
     e.preventDefault();
     setError("");
 
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres.");
+    if (password.length < 8) {
+      setError("A senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+
+    if (!/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+      setError("A senha deve conter letras e números.");
       return;
     }
 
@@ -112,9 +117,9 @@ const ResetPassword = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres, letras e números"
               required
-              minLength={6}
+              minLength={8}
               className="mt-1"
             />
           </div>
@@ -126,9 +131,9 @@ const ResetPassword = () => {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Confirme a nova senha"
               required
-              minLength={6}
+              minLength={8}
               className="mt-1"
             />
           </div>

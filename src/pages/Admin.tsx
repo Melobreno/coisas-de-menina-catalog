@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2, Search, Download, Filter } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2, Search, Download, Filter, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -252,6 +253,13 @@ const Admin = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isUploading2, setIsUploading2] = useState(false);
 
+  // Admin Management state
+  const [isAdminManageOpen, setIsAdminManageOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminAssignSubmitting, setAdminAssignSubmitting] = useState(false);
+  const [adminAssignError, setAdminAssignError] = useState("");
+  const [adminAssignSuccess, setAdminAssignSuccess] = useState("");
+
   // Search and Filter states
   const [searchCode, setSearchCode] = useState("");
   const [filterCategory, setFilterCategory] = useState<ProductCategory | "all">("all");
@@ -320,6 +328,23 @@ const Admin = () => {
     await updateProduct(editingProductId, formData);
     setEditingProductId(null);
     resetForm();
+  };
+
+  const handleAssignAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminAssignError("");
+    setAdminAssignSuccess("");
+    setAdminAssignSubmitting(true);
+    
+    const { error } = await supabase.rpc('assign_admin_role_by_email', { target_email: adminEmail });
+    setAdminAssignSubmitting(false);
+    
+    if (error) {
+      setAdminAssignError(error.message);
+    } else {
+      setAdminAssignSuccess("Usuário promovido a administrador com sucesso!");
+      setAdminEmail("");
+    }
   };
 
   const handleDeleteProduct = async (productId: string) => {
@@ -511,7 +536,64 @@ const Admin = () => {
                 </DialogContent>
               </Dialog>
 
-              <Button variant="ghost" size="sm" onClick={signOut}>
+              <Dialog open={isAdminManageOpen} onOpenChange={(open) => {
+                setIsAdminManageOpen(open);
+                if (!open) {
+                  setAdminEmail("");
+                  setAdminAssignError("");
+                  setAdminAssignSuccess("");
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Gerenciar Acessos
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="font-body font-semibold">Novo Administrador</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <p className="text-sm font-body text-muted-foreground">
+                      O usuário já deve ter uma conta para que você possa promovê-lo a administrador.
+                    </p>
+                    <form onSubmit={handleAssignAdmin} className="space-y-4">
+                      <div>
+                        <Label htmlFor="adminEmail" className="font-body text-sm">E-mail do Usuário</Label>
+                        <Input
+                          id="adminEmail"
+                          type="email"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          placeholder="usuario@email.com"
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      {adminAssignError && (
+                        <p className="text-sm text-destructive font-body">{adminAssignError}</p>
+                      )}
+                      
+                      {adminAssignSuccess && (
+                        <p className="text-sm text-emerald-600 font-body">{adminAssignSuccess}</p>
+                      )}
+
+                      <Button type="submit" className="w-full" disabled={adminAssignSubmitting || !adminEmail}>
+                        {adminAssignSubmitting ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Shield className="w-4 h-4 mr-2" />
+                        )}
+                        Conceder Acesso Admin
+                      </Button>
+                    </form>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button variant="ghost" size="sm" onClick={signOut} title="Sair">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>

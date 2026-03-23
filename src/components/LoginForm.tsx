@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { LogIn, UserPlus, Loader2, ShieldAlert, MailCheck } from "lucide-react";
+import { LogIn, Loader2, ShieldAlert } from "lucide-react";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
 const MAX_ATTEMPTS = 5;
@@ -14,16 +14,14 @@ interface LoginFormProps {
 }
 
 const LoginForm = ({ onSuccess }: LoginFormProps) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [signupSuccess, setSignupSuccess] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,38 +36,27 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     setIsSubmitting(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      setIsSubmitting(false);
-      if (error) {
-        const newAttempts = failedAttempts + 1;
-        setFailedAttempts(newAttempts);
-        if (newAttempts >= MAX_ATTEMPTS) {
-          const until = Date.now() + LOCKOUT_DURATION * 1000;
-          setLockoutUntil(until);
-          setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
-          setTimeout(() => {
-            setFailedAttempts(0);
-            setLockoutUntil(null);
-          }, LOCKOUT_DURATION * 1000);
-        } else {
-          setError(error.message);
-        }
+    const { error: signInError } = await signIn(email, password);
+    setIsSubmitting(false);
+    
+    if (signInError) {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const until = Date.now() + LOCKOUT_DURATION * 1000;
+        setLockoutUntil(until);
+        setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
+        setTimeout(() => {
+          setFailedAttempts(0);
+          setLockoutUntil(null);
+        }, LOCKOUT_DURATION * 1000);
       } else {
-        setFailedAttempts(0);
-        setLockoutUntil(null);
-        onSuccess?.();
+        setError(signInError.message);
       }
     } else {
-      const { error, needsConfirmation } = await signUp(email, password);
-      setIsSubmitting(false);
-      if (error) {
-        setError(error.message);
-      } else if (needsConfirmation) {
-        setSignupSuccess(true);
-      } else {
-        onSuccess?.();
-      }
+      setFailedAttempts(0);
+      setLockoutUntil(null);
+      onSuccess?.();
     }
   };
 
@@ -79,40 +66,14 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
   }
 
-  if (signupSuccess) {
-    return (
-      <div className="w-full max-w-sm mx-auto text-center">
-        <MailCheck className="w-12 h-12 text-gold mx-auto mb-4" />
-        <h2 className="font-display text-2xl text-foreground mb-2">Verifique seu E-mail</h2>
-        <p className="font-body text-sm text-muted-foreground mb-2">
-          Enviamos um link de confirmação para:
-        </p>
-        <p className="font-body text-sm font-semibold text-foreground mb-4">{email}</p>
-        <p className="font-body text-xs text-muted-foreground mb-6">
-          Clique no link recebido no e-mail para ativar sua conta. Verifique também a pasta de spam.
-        </p>
-        <button
-          type="button"
-          onClick={() => { setSignupSuccess(false); setIsLogin(true); }}
-          className="font-body text-sm text-gold hover:underline"
-        >
-          Voltar ao login
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-6">
         <h2 className="font-display text-2xl text-foreground">
-          {isLogin ? "Acesso Administrativo" : "Criar Conta"}
+          Acesso Administrativo
         </h2>
         <p className="font-body text-sm text-muted-foreground mt-2">
-          {isLogin 
-            ? "Entre com suas credenciais para gerenciar o catálogo"
-            : "Crie uma conta para acessar o painel"
-          }
+          Entre com suas credenciais para gerenciar o catálogo
         </p>
       </div>
 
@@ -167,34 +128,20 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : isLogin ? (
-            <LogIn className="w-4 h-4 mr-2" />
           ) : (
-            <UserPlus className="w-4 h-4 mr-2" />
+            <LogIn className="w-4 h-4 mr-2" />
           )}
-          {isLogin ? "Entrar" : "Criar Conta"}
+          Entrar
         </Button>
       </form>
-
-      {isLogin && (
-        <div className="mt-3 text-center">
-          <button
-            type="button"
-            onClick={() => setShowForgotPassword(true)}
-            className="font-body text-xs text-muted-foreground hover:text-gold hover:underline transition-colors"
-          >
-            Esqueceu sua senha?
-          </button>
-        </div>
-      )}
 
       <div className="mt-4 text-center">
         <button
           type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          className="font-body text-sm text-gold hover:underline"
+          onClick={() => setShowForgotPassword(true)}
+          className="font-body text-sm text-muted-foreground hover:text-gold hover:underline transition-colors"
         >
-          {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Faça login"}
+          Esqueceu sua senha?
         </button>
       </div>
     </div>

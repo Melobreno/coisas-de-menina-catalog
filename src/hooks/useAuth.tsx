@@ -8,7 +8,6 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -80,27 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/admin`,
-      },
-    });
-    const needsConfirmation = !error && data?.user?.identities?.length === 0 
-      ? false 
-      : !error && !data?.session;
-    return { error: error as Error | null, needsConfirmation };
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isLoading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
