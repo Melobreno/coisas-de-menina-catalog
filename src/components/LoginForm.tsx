@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { LogIn, UserPlus, Loader2 } from "lucide-react";
+import { LogIn, UserPlus, Loader2, ShieldAlert } from "lucide-react";
+import ForgotPasswordForm from "@/components/ForgotPasswordForm";
+
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 60; // seconds
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -11,10 +15,13 @@ interface LoginFormProps {
 
 const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
