@@ -38,31 +38,38 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     setIsSubmitting(true);
 
-    const { error } = isLogin 
-      ? await signIn(email, password)
-      : await signUp(email, password);
-
-    setIsSubmitting(false);
-
-    if (error) {
-      const newAttempts = failedAttempts + 1;
-      setFailedAttempts(newAttempts);
-      
-      if (newAttempts >= MAX_ATTEMPTS) {
-        const until = Date.now() + LOCKOUT_DURATION * 1000;
-        setLockoutUntil(until);
-        setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
-        setTimeout(() => {
-          setFailedAttempts(0);
-          setLockoutUntil(null);
-        }, LOCKOUT_DURATION * 1000);
+    if (isLogin) {
+      const { error } = await signIn(email, password);
+      setIsSubmitting(false);
+      if (error) {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= MAX_ATTEMPTS) {
+          const until = Date.now() + LOCKOUT_DURATION * 1000;
+          setLockoutUntil(until);
+          setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
+          setTimeout(() => {
+            setFailedAttempts(0);
+            setLockoutUntil(null);
+          }, LOCKOUT_DURATION * 1000);
+        } else {
+          setError(error.message);
+        }
       } else {
-        setError(error.message);
+        setFailedAttempts(0);
+        setLockoutUntil(null);
+        onSuccess?.();
       }
     } else {
-      setFailedAttempts(0);
-      setLockoutUntil(null);
-      onSuccess?.();
+      const { error, needsConfirmation } = await signUp(email, password);
+      setIsSubmitting(false);
+      if (error) {
+        setError(error.message);
+      } else if (needsConfirmation) {
+        setSignupSuccess(true);
+      } else {
+        onSuccess?.();
+      }
     }
   };
 
