@@ -79,6 +79,29 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
   }
 
+  if (signupSuccess) {
+    return (
+      <div className="w-full max-w-sm mx-auto text-center">
+        <MailCheck className="w-12 h-12 text-gold mx-auto mb-4" />
+        <h2 className="font-display text-2xl text-foreground mb-2">Verifique seu E-mail</h2>
+        <p className="font-body text-sm text-muted-foreground mb-2">
+          Enviamos um link de confirmação para:
+        </p>
+        <p className="font-body text-sm font-semibold text-foreground mb-4">{email}</p>
+        <p className="font-body text-xs text-muted-foreground mb-6">
+          Clique no link recebido no e-mail para ativar sua conta. Verifique também a pasta de spam.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setSignupSuccess(false); setIsLogin(true); }}
+          className="font-body text-sm text-gold hover:underline"
+        >
+          Voltar ao login
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-6">
