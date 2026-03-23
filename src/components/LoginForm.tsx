@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { LogIn, UserPlus, Loader2, ShieldAlert } from "lucide-react";
+import { LogIn, UserPlus, Loader2, ShieldAlert, MailCheck } from "lucide-react";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
 const MAX_ATTEMPTS = 5;
@@ -20,6 +20,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const { signIn, signUp } = useAuth();
@@ -37,31 +38,38 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     setIsSubmitting(true);
 
-    const { error } = isLogin 
-      ? await signIn(email, password)
-      : await signUp(email, password);
-
-    setIsSubmitting(false);
-
-    if (error) {
-      const newAttempts = failedAttempts + 1;
-      setFailedAttempts(newAttempts);
-      
-      if (newAttempts >= MAX_ATTEMPTS) {
-        const until = Date.now() + LOCKOUT_DURATION * 1000;
-        setLockoutUntil(until);
-        setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
-        setTimeout(() => {
-          setFailedAttempts(0);
-          setLockoutUntil(null);
-        }, LOCKOUT_DURATION * 1000);
+    if (isLogin) {
+      const { error } = await signIn(email, password);
+      setIsSubmitting(false);
+      if (error) {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= MAX_ATTEMPTS) {
+          const until = Date.now() + LOCKOUT_DURATION * 1000;
+          setLockoutUntil(until);
+          setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
+          setTimeout(() => {
+            setFailedAttempts(0);
+            setLockoutUntil(null);
+          }, LOCKOUT_DURATION * 1000);
+        } else {
+          setError(error.message);
+        }
       } else {
-        setError(error.message);
+        setFailedAttempts(0);
+        setLockoutUntil(null);
+        onSuccess?.();
       }
     } else {
-      setFailedAttempts(0);
-      setLockoutUntil(null);
-      onSuccess?.();
+      const { error, needsConfirmation } = await signUp(email, password);
+      setIsSubmitting(false);
+      if (error) {
+        setError(error.message);
+      } else if (needsConfirmation) {
+        setSignupSuccess(true);
+      } else {
+        onSuccess?.();
+      }
     }
   };
 
@@ -69,6 +77,29 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   if (showForgotPassword) {
     return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
+  }
+
+  if (signupSuccess) {
+    return (
+      <div className="w-full max-w-sm mx-auto text-center">
+        <MailCheck className="w-12 h-12 text-gold mx-auto mb-4" />
+        <h2 className="font-display text-2xl text-foreground mb-2">Verifique seu E-mail</h2>
+        <p className="font-body text-sm text-muted-foreground mb-2">
+          Enviamos um link de confirmação para:
+        </p>
+        <p className="font-body text-sm font-semibold text-foreground mb-4">{email}</p>
+        <p className="font-body text-xs text-muted-foreground mb-6">
+          Clique no link recebido no e-mail para ativar sua conta. Verifique também a pasta de spam.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setSignupSuccess(false); setIsLogin(true); }}
+          className="font-body text-sm text-gold hover:underline"
+        >
+          Voltar ao login
+        </button>
+      </div>
+    );
   }
 
   return (
