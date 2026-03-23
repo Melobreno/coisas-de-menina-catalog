@@ -57,15 +57,15 @@ interface ProductFormProps {
   handleImageUpload2: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const ProductForm = ({ 
-  formData, 
-  setFormData, 
-  onSubmit, 
-  submitLabel, 
+const ProductForm = ({
+  formData,
+  setFormData,
+  onSubmit,
+  submitLabel,
   isUploading,
   isUploading2,
   handleImageUpload,
-  handleImageUpload2 
+  handleImageUpload2
 }: ProductFormProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
@@ -193,9 +193,9 @@ const ProductForm = ({
           )}
         </div>
         {formData.image_url && (
-          <img 
-            src={formData.image_url} 
-            alt="Preview" 
+          <img
+            src={formData.image_url}
+            alt="Preview"
             className="mt-2 w-16 h-16 rounded-lg object-cover"
           />
         )}
@@ -217,9 +217,9 @@ const ProductForm = ({
           )}
         </div>
         {formData.image_url_2 && (
-          <img 
-            src={formData.image_url_2} 
-            alt="Preview 2" 
+          <img
+            src={formData.image_url_2}
+            alt="Preview 2"
             className="mt-2 w-16 h-16 rounded-lg object-cover"
           />
         )}
@@ -235,15 +235,15 @@ const ProductForm = ({
 
 const Admin = () => {
   const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
-  const { 
-    products, 
-    isLoading: productsLoading, 
-    addProduct, 
-    updateProduct, 
-    deleteProduct, 
-    bulkUpdateCollection, 
+  const {
+    products,
+    isLoading: productsLoading,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    bulkUpdateCollection,
     bulkDelete,
-    uploadImage 
+    uploadImage
   } = useProducts();
 
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -335,10 +335,10 @@ const Admin = () => {
     setAdminAssignError("");
     setAdminAssignSuccess("");
     setAdminAssignSubmitting(true);
-    
+
     const { error } = await supabase.rpc('assign_admin_role_by_email', { target_email: adminEmail });
     setAdminAssignSubmitting(false);
-    
+
     if (error) {
       setAdminAssignError(error.message);
     } else {
@@ -523,12 +523,12 @@ const Admin = () => {
                   <DialogHeader>
                     <DialogTitle className="font-body font-semibold">Adicionar Produto</DialogTitle>
                   </DialogHeader>
-                  <ProductForm 
-                    formData={formData} 
-                    setFormData={setFormData} 
-                    onSubmit={handleAddProduct} 
-                    submitLabel="Adicionar Produto" 
-                    isUploading={isUploading} 
+                  <ProductForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSubmit={handleAddProduct}
+                    submitLabel="Adicionar Produto"
+                    isUploading={isUploading}
                     isUploading2={isUploading2}
                     handleImageUpload={handleImageUpload}
                     handleImageUpload2={handleImageUpload2}
@@ -571,11 +571,11 @@ const Admin = () => {
                           className="mt-1"
                         />
                       </div>
-                      
+
                       {adminAssignError && (
                         <p className="text-sm text-destructive font-body">{adminAssignError}</p>
                       )}
-                      
+
                       {adminAssignSuccess && (
                         <p className="text-sm text-emerald-600 font-body">{adminAssignSuccess}</p>
                       )}
@@ -659,7 +659,7 @@ const Admin = () => {
             <span className="font-body text-sm text-foreground">
               {selectedProducts.length} produto(s) selecionado(s)
             </span>
-            
+
             <div className="flex items-center gap-2">
               <Select value={bulkCollection} onValueChange={(v) => setBulkCollection(v as ProductCollection)}>
                 <SelectTrigger className="w-40">
@@ -671,9 +671,9 @@ const Admin = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleBulkCollectionChange}
                 disabled={!bulkCollection}
               >
@@ -681,9 +681,9 @@ const Admin = () => {
               </Button>
             </div>
 
-            <Button 
-              variant="destructive" 
-              size="sm" 
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={handleBulkDelete}
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -742,14 +742,14 @@ const Admin = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <img 
-                          src={product.image_url || "/placeholder.svg"} 
+                        <img
+                          src={product.image_url || "/placeholder.svg"}
                           alt={product.name}
                           className="w-10 h-10 rounded-lg object-cover"
                         />
                         {product.image_url_2 && (
-                          <img 
-                            src={product.image_url_2} 
+                          <img
+                            src={product.image_url_2}
                             alt={`${product.name} 2`}
                             className="w-10 h-10 rounded-lg object-cover"
                           />
@@ -772,8 +772,8 @@ const Admin = () => {
                     <TableCell>
                       <span className={cn(
                         "font-body text-xs px-2 py-1 rounded",
-                        product.stock === 0 
-                          ? "bg-rose-100 text-rose-700" 
+                        product.stock === 0
+                          ? "bg-rose-100 text-rose-700"
                           : "bg-emerald-100 text-emerald-700"
                       )}>
                         {product.stock}
@@ -793,9 +793,9 @@ const Admin = () => {
                       <div className="flex items-center gap-1">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8"
                               onClick={() => startEdit(product)}
                             >
@@ -806,21 +806,21 @@ const Admin = () => {
                             <DialogHeader>
                               <DialogTitle className="font-body font-semibold">Editar Produto</DialogTitle>
                             </DialogHeader>
-                            <ProductForm 
-                              formData={formData} 
-                              setFormData={setFormData} 
-                              onSubmit={handleEditProduct} 
-                              submitLabel="Salvar Alterações" 
-                              isUploading={isUploading} 
+                            <ProductForm
+                              formData={formData}
+                              setFormData={setFormData}
+                              onSubmit={handleEditProduct}
+                              submitLabel="Salvar Alterações"
+                              isUploading={isUploading}
                               isUploading2={isUploading2}
                               handleImageUpload={handleImageUpload}
                               handleImageUpload2={handleImageUpload2}
                             />
                           </DialogContent>
                         </Dialog>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDeleteProduct(product.id)}
                         >
