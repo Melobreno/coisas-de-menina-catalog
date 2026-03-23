@@ -27,6 +27,14 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Check lockout
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      setError(`Muitas tentativas. Tente novamente em ${remaining} segundos.`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     const { error } = isLogin 
@@ -36,11 +44,32 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     setIsSubmitting(false);
 
     if (error) {
-      setError(error.message);
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const until = Date.now() + LOCKOUT_DURATION * 1000;
+        setLockoutUntil(until);
+        setError(`Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
+        setTimeout(() => {
+          setFailedAttempts(0);
+          setLockoutUntil(null);
+        }, LOCKOUT_DURATION * 1000);
+      } else {
+        setError(error.message);
+      }
     } else {
+      setFailedAttempts(0);
+      setLockoutUntil(null);
       onSuccess?.();
     }
   };
+
+  const isLockedOut = lockoutUntil !== null && Date.now() < lockoutUntil;
+
+  if (showForgotPassword) {
+    return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -85,13 +114,25 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive font-body">{error}</p>
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+            <ShieldAlert className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+            <p className="text-sm text-destructive font-body">{error}</p>
+          </div>
+        )}
+
+        {isLockedOut && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-700 font-body">
+              Conta temporariamente bloqueada por segurança.
+            </p>
+          </div>
         )}
 
         <Button 
           type="submit" 
           className="w-full"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLockedOut}
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -103,6 +144,18 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
           {isLogin ? "Entrar" : "Criar Conta"}
         </Button>
       </form>
+
+      {isLogin && (
+        <div className="mt-3 text-center">
+          <button
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            className="font-body text-xs text-muted-foreground hover:text-gold hover:underline transition-colors"
+          >
+            Esqueceu sua senha?
+          </button>
+        </div>
+      )}
 
       <div className="mt-4 text-center">
         <button
