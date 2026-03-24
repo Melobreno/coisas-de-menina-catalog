@@ -16,7 +16,7 @@ const HeroBanner = () => {
 
       {/* Content with solid background for readability */}
       <div className="relative z-10 w-full md:container md:mx-auto md:px-300 text-center">
-        <div className="max-w mx-auto bg-card/95 backdrop-blur-sm md:rounded-2xl px-4 py-8 md:p-12 border-y md:border border-border">
+        <div className="w-full mx-auto bg-card/95 backdrop-blur-sm md:rounded-2xl px-4 py-8 md:p-12 border-y md:border border-border">
           <p className="font-body text-sm md:text-base text-muted-foreground tracking-[0.2em] uppercase mb-3">
             Bem-vinda ao nosso universo
           </p>
