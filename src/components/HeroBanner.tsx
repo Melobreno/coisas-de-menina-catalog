@@ -21,11 +21,8 @@ const HeroBanner = () => {
             Bem-vinda ao nosso universo
           </p>
 
-          <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight mb-4">
-            Unindo{" "}
-            <span className="text-gold">estilo</span>,{" "}
-            <span className="text-rose-dark">beleza</span> e{" "}
-            <span className="text-gold">elegância</span>
+          <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight mb-4">                    
+            <span className="text-gold">Unindo estilo, beleza e elegância</span>
           </h2>
 
           <p className="font-body text-sm md:text-base text-muted-foreground max-w-lg mx-auto mb-6">
