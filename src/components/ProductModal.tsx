@@ -16,7 +16,6 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { getProductAvailability } from "@/lib/productAvailability";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -38,15 +37,12 @@ interface ProductModalProps {
 
 const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>("");
-  const isMobile = useIsMobile();
   
   // Reset states when modal opens/closes or product changes
   useEffect(() => {
     if (isOpen) {
       setCurrentImageIndex(0);
-      setIsDescriptionExpanded(false);
       setSelectedColor("");
     }
   }, [isOpen, product.id]);
@@ -88,195 +84,160 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // Check if description is long enough to need truncation (mobile only)
-  const descriptionNeedsTruncation = isMobile && product.description && product.description.length > 80;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "bg-card max-w-2xl p-0 overflow-hidden",
-        isMobile ? "max-h-[95vh] flex flex-col" : "max-h-[90vh] overflow-y-auto"
+        "bg-card w-[95vw] max-w-lg md:max-w-4xl max-h-[90vh] overflow-y-auto p-5 md:p-8",
+        "rounded-2xl shadow-2xl border-border"
       )}>
         <VisuallyHidden>
           <DialogTitle>{product.name}</DialogTitle>
         </VisuallyHidden>
-        
-        {/* Scrollable content area on mobile */}
-        <div className={cn(isMobile && "flex-1 overflow-y-auto pb-20")}>
-          {/* Image Gallery - Smaller on mobile */}
-          <div className="relative aspect-[4/3] sm:aspect-square bg-muted">
-            <img
-              src={images[currentImageIndex] || "/placeholder.svg"}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-            
-            {/* Navigation Arrows */}
-            {hasMultipleImages && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
-                  onClick={prevImage}
-                >
-                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card h-8 w-8 sm:h-10 sm:w-10 rounded-full"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                
-                {/* Dots Indicator */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {images.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentImageIndex(idx)}
-                      className={cn(
-                        "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200",
-                        idx === currentImageIndex 
-                          ? "bg-gold scale-110" 
-                          : "bg-card/60 hover:bg-card/80"
-                      )}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
 
-            {/* Code Badge - Smaller on mobile */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
-              <span className="inline-block px-2 py-1 sm:px-3 sm:py-1.5 bg-card/90 rounded-lg text-xs sm:text-sm font-body font-medium text-gold border border-gold/30">
-                {product.code}
-              </span>
-            </div>
-
-            {/* Availability Badge - Delicate style */}
-            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
-              <span className={cn(
-                "inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-body font-medium border transition-all",
-                 availability.badgeClassName
-              )}>
-                {availability.label}
-              </span>
-            </div>
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 relative">
+          
+          {/* Left Column: Image Gallery */}
+          <div className="w-full md:w-1/2 relative shrink-0">
+             <div className="relative aspect-[4/5] md:aspect-square w-full rounded-2xl overflow-hidden bg-muted/20">
+                 <img
+                   src={images[currentImageIndex] || "/placeholder.svg"}
+                   alt={product.name}
+                   className="w-full h-full object-cover transition-opacity duration-300"
+                 />
+                 
+                {/* Navigation Arrows */}
+                {hasMultipleImages && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/95 backdrop-blur-sm h-10 w-10 rounded-full shadow-md"
+                      onClick={prevImage}
+                    >
+                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/95 backdrop-blur-sm h-10 w-10 rounded-full shadow-md"
+                      onClick={nextImage}
+                    >
+                      <ChevronRight className="w-5 h-5 text-foreground" />
+                    </Button>
+                    
+                    {/* Dots Indicator */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 rounded-full bg-background/30 backdrop-blur-md">
+                      {images.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentImageIndex(idx)}
+                          className={cn(
+                            "w-2 h-2 rounded-full transition-all duration-300",
+                            idx === currentImageIndex 
+                              ? "bg-foreground scale-125 shadow-sm" 
+                              : "bg-foreground/50 hover:bg-foreground/80"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+             </div>
           </div>
 
-          {/* Content - Compact on mobile */}
-          <div className="p-4 sm:p-6">
-            <h2 className="font-body font-semibold text-lg sm:text-2xl text-foreground mb-1.5 sm:mb-2 leading-tight">
-              {product.name}
-            </h2>
-            
-            {product.description && (
-              <div className="mb-3 sm:mb-4">
-                <p className={cn(
-                  "font-body text-sm sm:text-base text-muted-foreground leading-relaxed",
-                  isMobile && !isDescriptionExpanded && "line-clamp-2"
-                )}>
-                  {product.description}
-                </p>
-                {descriptionNeedsTruncation && (
-                  <button
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="text-xs text-gold hover:text-gold/80 font-medium mt-1 transition-colors"
-                  >
-                    {isDescriptionExpanded ? "ver menos" : "ver mais"}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Colors */}
-            {requiresColorSelection && (
-              <div className="mb-4 sm:mb-6">
-                <p className="font-body text-sm font-medium text-foreground mb-2">Selecione uma cor:</p>
-                <Select value={selectedColor} onValueChange={setSelectedColor}>
-                  <SelectTrigger className="w-full sm:w-64 font-body">
-                     <SelectValue placeholder="Escolha uma cor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card z-50">
-                    {availableColors.map((color, idx) => (
-                      <SelectItem key={idx} value={color} className="font-body">
-                        {color}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Desktop: Row layout with CTA */}
-            {!isMobile && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="font-body font-bold text-2xl text-gold">
-                  {formatPrice(product.price)}
+          {/* Right Column: Content */}
+          <div className="w-full md:w-1/2 flex flex-col pt-2 md:pt-0">
+            <div className="flex-1 space-y-6">
+              
+              {/* Header: Badges */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="px-3 py-1 bg-gold/10 rounded-md text-xs font-body font-semibold text-gold border border-gold/20 tracking-wider">
+                  {product.code}
                 </span>
-
-                <Button
-                  variant="whatsapp"
-                  size="default"
-                  asChild
-                  disabled={!canConsult}
-                  className={cn(
-                    "gap-2",
-                    !canConsult && "opacity-50 cursor-not-allowed pointer-events-none"
-                  )}
-                >
-                  <a
-                    href={canConsult ? whatsappLink : undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    {!availability.isAvailable 
-                      ? "Indisponível" 
-                      : (!hasSelectedRequiredColor ? "Selecione uma cor" : "Consultar")}
-                  </a>
-                </Button>
+                <span className={cn(
+                  "px-3 py-1 rounded-md text-xs font-body font-semibold border tracking-wider",
+                   availability.badgeClassName
+                )}>
+                  {availability.label}
+                </span>
               </div>
-            )}
 
-            {/* Mobile: Only price in content area */}
-            {isMobile && (
-              <span className="font-body font-bold text-xl text-gold">
-                {formatPrice(product.price)}
-              </span>
-            )}
+              {/* Title & Price */}
+              <div className="space-y-3">
+                <h2 className="font-body font-bold text-3xl md:text-4xl text-foreground leading-tight">
+                  {product.name}
+                </h2>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-body font-bold text-3xl md:text-4xl text-gold drop-shadow-sm">
+                    {formatPrice(product.price)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Description */}
+              {product.description && (
+                <div className="pt-2 border-t border-border/40">
+                  <h3 className="font-body font-semibold text-sm text-foreground mb-2">Detalhes da peça</h3>
+                  <p className="font-body text-base text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Colors Dropdown */}
+              {requiresColorSelection && (
+                <div className="pt-4 border-t border-border/40">
+                  <h3 className="font-body font-semibold text-sm text-foreground mb-3">
+                    Selecione a cor desejada <span className="text-destructive">*</span>
+                  </h3>
+                  <Select value={selectedColor} onValueChange={setSelectedColor}>
+                    <SelectTrigger className={cn(
+                      "w-full font-body h-14 rounded-xl border-ring focus:ring-gold transition-all duration-200",
+                      selectedColor ? "bg-muted/30 border-gold/50" : "bg-background"
+                    )}>
+                       <SelectValue placeholder="Escolha uma cor..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card z-50 rounded-xl">
+                      {availableColors.map((color, idx) => (
+                        <SelectItem key={idx} value={color} className="font-body py-3 text-base cursor-pointer">
+                          {color}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* CTA Footer */}
+            <div className="mt-8 pt-6 border-t border-border/40">
+              <Button
+                variant="whatsapp"
+                size="lg"
+                asChild
+                disabled={!canConsult}
+                style={{ backgroundColor: canConsult ? '#25D366' : undefined }}
+                className={cn(
+                  "w-full h-14 rounded-xl font-body font-bold tracking-wide text-base shadow-lg transition-all duration-300 hover:scale-[1.02]",
+                  !canConsult && "opacity-50 cursor-not-allowed pointer-events-none shadow-none hover:scale-100"
+                )}
+              >
+                <a
+                  href={canConsult ? whatsappLink : undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  {!availability.isAvailable 
+                    ? "Peça Esgotada" 
+                    : (!hasSelectedRequiredColor ? "Selecione a cor para consultar" : "Consultar Disponibilidade")}
+                </a>
+              </Button>
+            </div>
+
           </div>
         </div>
-
-        {/* Mobile: Fixed CTA at bottom */}
-        {isMobile && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-card border-t border-border/50 shadow-lg">
-            <Button
-              variant="whatsapp"
-              size="default"
-              asChild
-              disabled={!canConsult}
-              className={cn(
-                "gap-2 w-full justify-center",
-                !canConsult && "opacity-50 cursor-not-allowed pointer-events-none"
-              )}
-            >
-              <a
-                href={canConsult ? whatsappLink : undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MessageCircle className="w-4 h-4" />
-                {!availability.isAvailable 
-                  ? "Indisponível" 
-                  : (!hasSelectedRequiredColor ? "Selecione uma cor" : "Consultar via WhatsApp")}
-              </a>
-            </Button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
