@@ -2,7 +2,8 @@ import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { collectionLabels, ProductCollection } from "@/hooks/useProducts";
+import { ProductCollection } from "@/hooks/useProducts";
+import { Collection } from "@/hooks/useCatalogSettings";
 import { cn } from "@/lib/utils";
 import { getProductAvailability } from "@/lib/productAvailability";
 import ProductModal from "./ProductModal";
@@ -19,13 +20,15 @@ interface Product {
   stock: number;
   image: string;
   image2?: string | null;
+  colors: string[];
 }
 
 interface ProductCardProps {
   product: Product;
+  collections: Collection[];
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, collections }: ProductCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const whatsappNumber = "5581988325302";
@@ -89,7 +92,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {product.collection && (
             <div className="absolute bottom-3 left-3">
               <span className="inline-block px-3 py-1 bg-gold/90 rounded-lg text-xs font-body text-secondary-foreground">
-                {collectionLabels[product.collection]}
+                {collections.find(c => c.slug === product.collection)?.name || product.collection}
               </span>
             </div>
           )}
@@ -147,6 +150,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         product={product}
+        categoryName={collections.find(c => c.slug === product.collection)?.name}
       />
     </>
   );

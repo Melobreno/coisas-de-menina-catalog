@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type ProductCategory = "lacos-infantil" | "lacos-adulto" | "tiaras" | "pulseiras";
-export type ProductCollection = "carnaval" | "sao-joao" | "natal" | "ano-novo" | "escolar" | "especiais";
+export type ProductCategory = string;
+export type ProductCollection = string;
 export type ProductStatus = "em-estoque" | "sob-encomenda" | "esgotado";
 
 export interface Product {
@@ -14,6 +14,7 @@ export interface Product {
   code: string;
   category: ProductCategory;
   collection: ProductCollection | null;
+  colors: string[];
   stock: number;
   status: ProductStatus;
   image_url: string | null;
@@ -22,21 +23,6 @@ export interface Product {
   updated_at: string;
 }
 
-export const categoryLabels: Record<ProductCategory, string> = {
-  "lacos-infantil": "Laços Infantis",
-  "lacos-adulto": "Laços Adulto",
-  "tiaras": "Tiaras Aramadas",
-  "pulseiras": "Pulseiras",
-};
-
-export const collectionLabels: Record<ProductCollection, string> = {
-  "carnaval": "Carnaval",
-  "sao-joao": "São João",
-  "natal": "Natal",
-  "ano-novo": "Ano Novo",
-  "escolar": "Escolar",
-  "especiais": "Especiais",
-};
 
 export const statusLabels: Record<ProductStatus, string> = {
   "em-estoque": "Em Estoque",

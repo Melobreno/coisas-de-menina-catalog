@@ -17,11 +17,11 @@ const HeroBanner = () => {
       {/* Content with solid background for readability */}
       <div className="relative z-10 w-full md:container md:mx-auto md:px-300 text-center">
         <div className="max-w-2xl mx-auto bg-card/95 backdrop-blur-sm md:rounded-2xl px-4 py-8 md:p-12 border-y md:border border-border">
-          <p className="font-body text-sm md:text-base text-gold tracking-[0.2em] uppercase mb-3">
+          <p className="font-body text-sm md:text-base text-muted-foreground tracking-[0.2em] uppercase mb-3">
             Bem-vinda ao nosso universo
           </p>
 
-          <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight mb-4">                    
+          <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight mb-4">
             <span className="text-gold">Unindo estilo, beleza e elegância</span>
           </h2>
 

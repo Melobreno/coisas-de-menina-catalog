@@ -6,10 +6,12 @@ import ProductGrid from "@/components/ProductGrid";
 import FloatingButtons from "@/components/FloatingButtons";
 import Footer from "@/components/Footer";
 import { useProducts, ProductCategory, ProductCollection } from "@/hooks/useProducts";
+import { useCatalogSettings } from "@/hooks/useCatalogSettings";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
-  const { products, isLoading } = useProducts();
+  const { products, isLoading: productsLoading } = useProducts();
+  const { categories, collections, isLoading: settingsLoading } = useCatalogSettings();
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "all">("all");
   const [selectedCollection, setSelectedCollection] = useState<ProductCollection | "all">("all");
 
@@ -34,7 +36,10 @@ const Index = () => {
     stock: p.stock,
     image: p.image_url || "/placeholder.svg",
     image2: p.image_url_2,
+    colors: p.colors || [],
   }));
+
+  const isLoading = productsLoading || settingsLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,6 +49,8 @@ const Index = () => {
         <CategoryFilter
           selectedCategory={selectedCategory}
           selectedCollection={selectedCollection}
+          categories={categories}
+          collections={collections}
           onCategoryChange={setSelectedCategory}
           onCollectionChange={setSelectedCollection}
         />
@@ -52,7 +59,7 @@ const Index = () => {
             <Loader2 className="w-8 h-8 animate-spin text-gold" />
           </div>
         ) : (
-          <ProductGrid products={displayProducts} />
+          <ProductGrid products={displayProducts} collections={collections} />
         )}
       </main>
       <Footer />

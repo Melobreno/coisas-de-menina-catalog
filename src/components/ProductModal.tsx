@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,6 +6,13 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { getProductAvailability } from "@/lib/productAvailability";
@@ -24,20 +31,32 @@ interface ProductModalProps {
     image2?: string | null;
     status: "em-estoque" | "sob-encomenda" | "esgotado";
     stock: number;
+    colors: string[];
   };
+  categoryName?: string;
 }
 
 const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>("");
   const isMobile = useIsMobile();
   
+  // Reset states when modal opens/closes or product changes
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentImageIndex(0);
+      setIsDescriptionExpanded(false);
+      setSelectedColor("");
+    }
+  }, [isOpen, product.id]);
+
   const images = [product.image, product.image2].filter(Boolean) as string[];
   const hasMultipleImages = images.length > 1;
 
   const whatsappNumber = "5581988325302";
   const whatsappMessage = encodeURIComponent(
-    `Olá! Tenho interesse no item ${product.name} (Código: ${product.code}).`
+    `Olá! Tenho interesse no item ${product.name} (Código: ${product.code})${selectedColor ? ` na cor ${selectedColor}` : ''}.`
   );
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -52,6 +71,14 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     status: product.status,
     stock: product.stock,
   });
+
+  const availableColors = product.colors 
+    ? product.colors.flatMap(c => c.split(/[;,]/).map(s => s.trim()).filter(Boolean)) 
+    : [];
+
+  const requiresColorSelection = availableColors.length > 0;
+  const hasSelectedRequiredColor = !requiresColorSelection || selectedColor !== "";
+  const canConsult = availability.isAvailable && hasSelectedRequiredColor;
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -165,6 +192,25 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
               </div>
             )}
 
+            {/* Colors */}
+            {requiresColorSelection && (
+              <div className="mb-4 sm:mb-6">
+                <p className="font-body text-sm font-medium text-foreground mb-2">Selecione uma cor:</p>
+                <Select value={selectedColor} onValueChange={setSelectedColor}>
+                  <SelectTrigger className="w-full sm:w-64 font-body">
+                     <SelectValue placeholder="Escolha uma cor" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card z-50">
+                    {availableColors.map((color, idx) => (
+                      <SelectItem key={idx} value={color} className="font-body">
+                        {color}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Desktop: Row layout with CTA */}
             {!isMobile && (
               <div className="flex items-center justify-between gap-4">
@@ -176,19 +222,21 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
                   variant="whatsapp"
                   size="default"
                   asChild
-                  disabled={!availability.isAvailable}
+                  disabled={!canConsult}
                   className={cn(
                     "gap-2",
-                    !availability.isAvailable && "opacity-50 cursor-not-allowed pointer-events-none"
+                    !canConsult && "opacity-50 cursor-not-allowed pointer-events-none"
                   )}
                 >
                   <a
-                    href={availability.isAvailable ? whatsappLink : undefined}
+                    href={canConsult ? whatsappLink : undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <MessageCircle className="w-5 h-5" />
-                    {!availability.isAvailable ? "Indisponível" : "Consultar"}
+                    {!availability.isAvailable 
+                      ? "Indisponível" 
+                      : (!hasSelectedRequiredColor ? "Selecione uma cor" : "Consultar")}
                   </a>
                 </Button>
               </div>
@@ -210,19 +258,21 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
               variant="whatsapp"
               size="default"
               asChild
-              disabled={!availability.isAvailable}
+              disabled={!canConsult}
               className={cn(
                 "gap-2 w-full justify-center",
-                !availability.isAvailable && "opacity-50 cursor-not-allowed pointer-events-none"
+                !canConsult && "opacity-50 cursor-not-allowed pointer-events-none"
               )}
             >
               <a
-                href={availability.isAvailable ? whatsappLink : undefined}
+                href={canConsult ? whatsappLink : undefined}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <MessageCircle className="w-4 h-4" />
-                {!availability.isAvailable ? "Indisponível" : "Consultar via WhatsApp"}
+                {!availability.isAvailable 
+                  ? "Indisponível" 
+                  : (!hasSelectedRequiredColor ? "Selecione uma cor" : "Consultar via WhatsApp")}
               </a>
             </Button>
           </div>

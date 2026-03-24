@@ -14,11 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      collections: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
           code: string
           collection: string | null
+          colors: string[]
           created_at: string
           description: string | null
           id: string
@@ -34,6 +77,7 @@ export type Database = {
           category: string
           code: string
           collection?: string | null
+          colors?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -49,6 +93,7 @@ export type Database = {
           category?: string
           code?: string
           collection?: string | null
+          colors?: string[]
           created_at?: string
           description?: string | null
           id?: string

@@ -1,5 +1,6 @@
 import ProductCard from "./ProductCard";
 import { ProductCategory, ProductCollection } from "@/hooks/useProducts";
+import { Collection } from "@/hooks/useCatalogSettings";
 
 interface Product {
   id: string;
@@ -12,13 +13,16 @@ interface Product {
   status: "em-estoque" | "sob-encomenda" | "esgotado";
   stock: number;
   image: string;
+  image2?: string | null;
+  colors: string[];
 }
 
 interface ProductGridProps {
   products: Product[];
+  collections: Collection[];
 }
 
-const ProductGrid = ({ products }: ProductGridProps) => {
+const ProductGrid = ({ products, collections }: ProductGridProps) => {
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -42,7 +46,7 @@ const ProductGrid = ({ products }: ProductGridProps) => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} collections={collections} />
           ))}
         </div>
       </div>

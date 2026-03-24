@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2, Search, Download, Filter, Shield } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit2, Save, Upload, Check, LogOut, Loader2, Search, Download, Filter, Shield, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +29,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { useProducts, ProductCategory, ProductCollection, ProductStatus, categoryLabels, collectionLabels, statusLabels } from "@/hooks/useProducts";
+import { useProducts, ProductCategory, ProductCollection, ProductStatus, statusLabels } from "@/hooks/useProducts";
+import { useCatalogSettings, Category, Collection } from "@/hooks/useCatalogSettings";
 import LoginForm from "@/components/LoginForm";
+import { CatalogSettingsModal } from "@/components/CatalogSettingsModal";
 import { cn } from "@/lib/utils";
 
 interface ProductFormData {
@@ -44,6 +46,7 @@ interface ProductFormData {
   stock: number;
   image_url: string | null;
   image_url_2: string | null;
+  colors: string[];
 }
 
 interface ProductFormProps {
@@ -55,6 +58,8 @@ interface ProductFormProps {
   isUploading2: boolean;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleImageUpload2: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  categories: Category[];
+  collections: Collection[];
 }
 
 const ProductForm = ({
@@ -65,7 +70,9 @@ const ProductForm = ({
   isUploading,
   isUploading2,
   handleImageUpload,
-  handleImageUpload2
+  handleImageUpload2,
+  categories,
+  collections
 }: ProductFormProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
@@ -134,8 +141,8 @@ const ProductForm = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card z-50">
-            {Object.entries(categoryLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label}</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -162,17 +169,29 @@ const ProductForm = ({
       <Label className="font-body text-sm">Coleção</Label>
       <Select
         value={formData.collection}
-        onValueChange={(value) => setFormData({ ...formData, collection: value as ProductCollection })}
+        onValueChange={(value) => setFormData({ ...formData, collection: value })}
       >
         <SelectTrigger className="mt-1">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-card z-50">
-          {Object.entries(collectionLabels).map(([key, label]) => (
-            <SelectItem key={key} value={key}>{label}</SelectItem>
+          <SelectItem value="none" className="text-muted-foreground italic">Nenhuma coleção</SelectItem>
+          {collections.map((col) => (
+            <SelectItem key={col.id} value={col.slug}>{col.name}</SelectItem>
           ))}
         </SelectContent>
       </Select>
+    </div>
+
+    <div>
+      <Label htmlFor="colors" className="font-body text-sm">Cores (separadas por vírgula ou ponto e vírgula)</Label>
+      <Input
+        id="colors"
+        value={formData.colors ? formData.colors.join(', ') : ''}
+        onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(/[;,]/).map(c => c.trim()).filter(Boolean) })}
+        className="mt-1"
+        placeholder="Ex: Dourado; Rosa; Azul"
+      />
     </div>
 
     <div className="grid grid-cols-2 gap-4">
@@ -246,6 +265,8 @@ const Admin = () => {
     uploadImage
   } = useProducts();
 
+  const { categories, collections, addCategory, deleteCategory, addCollection, deleteCollection, isLoading: settingsLoading } = useCatalogSettings();
+
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -259,6 +280,7 @@ const Admin = () => {
   const [adminAssignSubmitting, setAdminAssignSubmitting] = useState(false);
   const [adminAssignError, setAdminAssignError] = useState("");
   const [adminAssignSuccess, setAdminAssignSuccess] = useState("");
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Search and Filter states
   const [searchCode, setSearchCode] = useState("");
@@ -276,6 +298,7 @@ const Admin = () => {
     stock: 0,
     image_url: null,
     image_url_2: null,
+    colors: [],
   });
 
   // Filtered products
@@ -389,6 +412,7 @@ const Admin = () => {
       stock: 0,
       image_url: null,
       image_url_2: null,
+      colors: [],
     });
   };
 
@@ -405,6 +429,7 @@ const Admin = () => {
       stock: product.stock,
       image_url: product.image_url,
       image_url_2: product.image_url_2,
+      colors: product.colors || [],
     });
   };
 
@@ -420,7 +445,7 @@ const Admin = () => {
     const rows = filteredProducts.map(p => [
       p.name,
       p.code,
-      categoryLabels[p.category],
+      categories.find(c => c.slug === p.category)?.name || p.category,
       p.price.toFixed(2).replace(".", ","),
       p.image_url || ""
     ]);
@@ -440,7 +465,7 @@ const Admin = () => {
   };
 
   // Loading state
-  if (authLoading) {
+  if (authLoading || settingsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
@@ -512,6 +537,11 @@ const Admin = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsSettingsModalOpen(true)}>
+                <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Gerenciar Catálogo
+              </Button>
+              
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="gold" size="sm" onClick={resetForm}>
@@ -532,6 +562,8 @@ const Admin = () => {
                     isUploading2={isUploading2}
                     handleImageUpload={handleImageUpload}
                     handleImageUpload2={handleImageUpload2}
+                    categories={categories}
+                    collections={collections}
                   />
                 </DialogContent>
               </Dialog>
@@ -600,6 +632,11 @@ const Admin = () => {
           </div>
         </div>
       </header>
+      
+      <CatalogSettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={() => setIsSettingsModalOpen(false)} 
+      />
 
       <main className="container mx-auto px-4 py-6">
         {/* Search and Filter Bar */}
@@ -626,8 +663,8 @@ const Admin = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card z-50">
                   <SelectItem value="all">Todas</SelectItem>
-                  {Object.entries(categoryLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -666,8 +703,8 @@ const Admin = () => {
                   <SelectValue placeholder="Alterar coleção" />
                 </SelectTrigger>
                 <SelectContent className="bg-card z-50">
-                  {Object.entries(collectionLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  {collections.map((col) => (
+                    <SelectItem key={col.id} value={col.slug}>{col.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -761,10 +798,10 @@ const Admin = () => {
                     </TableCell>
                     <TableCell className="font-body text-sm">{product.name}</TableCell>
                     <TableCell className="font-body text-xs text-muted-foreground">
-                      {categoryLabels[product.category]}
+                      {categories.find(c => c.slug === product.category)?.name || product.category}
                     </TableCell>
                     <TableCell className="font-body text-xs text-muted-foreground">
-                      {product.collection ? collectionLabels[product.collection] : "-"}
+                      {product.collection ? (collections.find(c => c.slug === product.collection)?.name || product.collection) : "-"}
                     </TableCell>
                     <TableCell className="font-body text-sm text-gold">
                       {formatPrice(product.price)}
@@ -815,6 +852,8 @@ const Admin = () => {
                               isUploading2={isUploading2}
                               handleImageUpload={handleImageUpload}
                               handleImageUpload2={handleImageUpload2}
+                              categories={categories}
+                              collections={collections}
                             />
                           </DialogContent>
                         </Dialog>

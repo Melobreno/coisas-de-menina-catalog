@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { ProductCategory, ProductCollection, categoryLabels, collectionLabels } from "@/hooks/useProducts";
+import { ProductCategory, ProductCollection } from "@/hooks/useProducts";
+import { Category, Collection } from "@/hooks/useCatalogSettings";
 import {
   Select,
   SelectContent,
@@ -13,29 +14,15 @@ interface CategoryFilterProps {
   selectedCollection: ProductCollection | "all";
   onCategoryChange: (category: ProductCategory | "all") => void;
   onCollectionChange: (collection: ProductCollection | "all") => void;
+  categories: Category[];
+  collections: Collection[];
 }
-
-const categories: (ProductCategory | "all")[] = [
-  "all",
-  "lacos-infantil",
-  "lacos-adulto",
-  "tiaras",
-  "pulseiras",
-];
-
-const collections: (ProductCollection | "all")[] = [
-  "all",
-  "carnaval",
-  "sao-joao",
-  "natal",
-  "ano-novo",
-  "escolar",
-  "especiais",
-];
 
 const CategoryFilter = ({ 
   selectedCategory, 
   selectedCollection,
+  categories,
+  collections,
   onCategoryChange, 
   onCollectionChange 
 }: CategoryFilterProps) => {
@@ -53,18 +40,29 @@ const CategoryFilter = ({
 
         {/* Category Buttons */}
         <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <button
+            onClick={() => onCategoryChange("all")}
+            className={cn(
+              "px-4 py-2 rounded-xl font-body text-sm border-2",
+              selectedCategory === "all"
+                ? "bg-gold text-secondary-foreground border-gold"
+                : "bg-transparent text-foreground border-border hover:border-gold hover:text-gold"
+            )}
+          >
+            Todos
+          </button>
           {categories.map((category) => (
             <button
-              key={category}
-              onClick={() => onCategoryChange(category)}
+              key={category.id}
+              onClick={() => onCategoryChange(category.slug)}
               className={cn(
                 "px-4 py-2 rounded-xl font-body text-sm border-2",
-                selectedCategory === category
+                selectedCategory === category.slug
                   ? "bg-gold text-secondary-foreground border-gold"
                   : "bg-transparent text-foreground border-border hover:border-gold hover:text-gold"
               )}
             >
-              {category === "all" ? "Todos" : categoryLabels[category]}
+              {category.name}
             </button>
           ))}
         </div>
@@ -80,13 +78,14 @@ const CategoryFilter = ({
                 <SelectValue placeholder="Filtrar por Coleção" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border z-50">
+                <SelectItem value="all" className="font-body cursor-pointer">Todas as Coleções</SelectItem>
                 {collections.map((collection) => (
                   <SelectItem 
-                    key={collection} 
-                    value={collection}
+                    key={collection.id} 
+                    value={collection.slug}
                     className="font-body cursor-pointer"
                   >
-                    {collection === "all" ? "Todas as Coleções" : collectionLabels[collection]}
+                    {collection.name}
                   </SelectItem>
                 ))}
               </SelectContent>
