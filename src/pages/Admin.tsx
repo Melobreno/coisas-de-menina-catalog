@@ -522,31 +522,40 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-              </Link>
-              <h1 className="font-body font-semibold text-xl text-foreground">
-                Painel Administrativo
-              </h1>
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            
+            <div className="flex items-center justify-between w-full sm:w-auto">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <Link to="/">
+                  <Button variant="ghost" size="icon" className="sm:hidden text-muted-foreground w-8 h-8">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="hidden sm:flex">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                  </Button>
+                </Link>
+                <h1 className="font-body font-semibold text-lg sm:text-xl text-foreground truncate">
+                  Admin
+                </h1>
+              </div>
+              <Button variant="ghost" size="icon" onClick={signOut} className="sm:hidden w-8 h-8 text-muted-foreground">
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsSettingsModalOpen(true)}>
-                <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
-                Gerenciar Catálogo
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
+              <Button variant="outline" size="sm" onClick={() => setIsSettingsModalOpen(true)} className="shrink-0">
+                <Settings className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline-block">Catálogo</span>
               </Button>
               
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="gold" size="sm" onClick={resetForm}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Novo Produto
+                  <Button variant="gold" size="sm" onClick={resetForm} className="shrink-0">
+                    <Plus className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline-block">Produto</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-card max-w-lg max-h-[90vh] overflow-y-auto">
@@ -577,9 +586,9 @@ const Admin = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                  <Button variant="outline" size="sm" className="hidden sm:inline-flex shrink-0">
                     <Shield className="w-4 h-4 mr-2" />
-                    Gerenciar Acessos
+                    Acessos
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-card max-w-sm">
@@ -625,7 +634,7 @@ const Admin = () => {
                 </DialogContent>
               </Dialog>
 
-              <Button variant="ghost" size="sm" onClick={signOut} title="Sair">
+              <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden sm:flex shrink-0 text-muted-foreground w-8 h-8">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -641,8 +650,8 @@ const Admin = () => {
       <main className="container mx-auto px-4 py-6">
         {/* Search and Filter Bar */}
         <div className="bg-card border border-border rounded-xl p-4 mb-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+            <div className="flex-1 w-full">
               <Label className="font-body text-xs text-muted-foreground mb-1 block">Buscar por Código</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -654,11 +663,11 @@ const Admin = () => {
                 />
               </div>
             </div>
-            <div className="w-40">
+            <div className="w-full sm:w-40 shrink-0">
               <Label className="font-body text-xs text-muted-foreground mb-1 block">Categoria</Label>
               <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v as ProductCategory | "all")}>
                 <SelectTrigger>
-                  <Filter className="w-4 h-4 mr-2" />
+                  <Filter className="w-4 h-4 mr-2 hidden sm:block" />
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent className="bg-card z-50">
@@ -669,7 +678,7 @@ const Admin = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-40">
+            <div className="w-full sm:w-40 shrink-0">
               <Label className="font-body text-xs text-muted-foreground mb-1 block">Status</Label>
               <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as ProductStatus | "all")}>
                 <SelectTrigger>
@@ -683,9 +692,9 @@ const Admin = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" size="default" onClick={exportToCSV}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar CSV
+            <Button variant="outline" size="default" onClick={exportToCSV} className="w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+              <Download className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline-block">Exportar</span>
             </Button>
           </div>
         </div>
@@ -747,10 +756,11 @@ const Admin = () => {
           </div>
         ) : (
           /* Products Table */
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto w-full relative">
+              <Table className="w-full min-w-[800px]">
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
                   <TableHead className="w-12">
                     <Checkbox
                       checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
@@ -871,6 +881,7 @@ const Admin = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </div>
         )}
       </main>
